@@ -105,7 +105,7 @@ const VaultVisual: React.FC<{ stateLabel: string; eligible: boolean }> = ({ stat
               alt="Vault status"
             />
           </div>
-          <p className={`text-xs font-black uppercase tracking-[0.3em] ${eligible ? 'text-cc-lime' : 'text-white/40'}`}>
+          <p className={`text-sm font-black uppercase tracking-[0.3em] ${eligible ? 'text-cc-lime' : 'text-white/40'}`}>
             {stateLabel}
           </p>
         </div>
@@ -147,7 +147,7 @@ const VaultMainPanel: React.FC = () => {
     const expiresAt = parseDate(data?.expiresAt ?? null);
     const usedAt = parseDate(data?.vaultFillUsedAt ?? null);
 
-    const statusLabel = vaultBalance > 0 ? (eligible ? "ACCESSIBLE" : "LOCKED") : "EMPTY";
+    const statusLabel = vaultBalance > 0 ? (eligible ? "이용 가능" : "잠금") : "비어있음";
     const statusTone = eligible ? "text-cc-lime shadow-[0_0_10px_#d2fd9c44]" : "text-white/40";
 
     const unlockRulesJson = data?.unlockRulesJson;
@@ -244,12 +244,12 @@ const VaultMainPanel: React.FC = () => {
 
             <div className="flex flex-wrap gap-4 items-center">
               {view.expiresAt && <CountdownTimer expiresAt={view.expiresAt} />}
-              <div className={`px-4 py-2 rounded-full border border-white/10 bg-white/5 text-[12px] font-black tracking-wide ${view.eligible ? 'text-cc-lime border-cc-lime/30' : 'text-white/40'}`}>
-                STATUS: {view.statusLabel}
+              <div className={`px-4 py-2 rounded-full border border-white/10 bg-white/5 text-sm font-black tracking-wide ${view.eligible ? 'text-cc-lime border-cc-lime/30' : 'text-white/40'}`}>
+                상태: {view.statusLabel}
               </div>
               {view.accrualMultiplier > 1 && (
-                <div className="px-4 py-2 rounded-full bg-red-500 text-white text-[12px] font-black animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-                  HOT {view.accrualMultiplier}X REWARD
+                <div className="px-4 py-2 rounded-full bg-red-500 text-white text-sm font-black animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                  HOT {view.accrualMultiplier}배 적립
                 </div>
               )}
             </div>
@@ -293,10 +293,10 @@ const VaultMainPanel: React.FC = () => {
               <img src="/images/layer-2.svg" className="h-full w-full object-contain" alt="" />
             </div>
             <div className="flex flex-col gap-1">
-              <p className="text-white/40 text-xs font-black tracking-widest uppercase">Locked Points</p>
+              <p className="text-white/40 text-sm font-black tracking-widest uppercase">잠금 포인트</p>
               <h3 className="text-cc-lime text-4xl font-black">{formatWon(view.vaultBalance)}</h3>
             </div>
-            <p className="text-white/30 text-xs mt-4">해금 시 실시간으로 보유 머니에 합산됩니다.</p>
+            <p className="text-white/30 text-sm mt-4">해금 시 실시간으로 보유 머니에 합산됩니다.</p>
           </div>
         </div>
 
@@ -308,10 +308,10 @@ const VaultMainPanel: React.FC = () => {
               <img src="/images/wallet.svg" className="h-full w-full object-contain invert brightness-200" alt="" />
             </div>
             <div className="flex flex-col gap-1">
-              <p className="text-white/40 text-xs font-black tracking-widest uppercase">My Cash</p>
+              <p className="text-white/40 text-sm font-black tracking-widest uppercase">보유 머니</p>
               <h3 className="text-white text-4xl font-black">{formatWon(view.cashBalance)}</h3>
             </div>
-            <p className="text-white/30 text-xs mt-4">현재 적립된 금고 보유머니입니다.</p>
+            <p className="text-white/30 text-sm mt-4">현재 적립된 금고 보유머니입니다.</p>
           </div>
         </div>
       </div>
@@ -323,12 +323,12 @@ const VaultMainPanel: React.FC = () => {
           <div className="p-8 rounded-[32px] border border-white/10 bg-black/40 backdrop-blur-md">
             <h4 className="text-white font-black text-lg mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-cc-lime rounded-full" />
-              Vault System Rules
+              금고 이용 규칙
             </h4>
             <div className="grid gap-4">
               {unlockRules.map((rule, i) => (
                 <div key={i} className="flex gap-4 items-start p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-colors">
-                  <div className="h-6 w-6 rounded-full bg-cc-lime/20 flex items-center justify-center text-cc-lime font-black text-[10px] shrink-0">
+                  <div className="h-6 w-6 rounded-full bg-cc-lime/20 flex items-center justify-center text-cc-lime font-black text-sm shrink-0">
                     {i + 1}
                   </div>
                   <p className="text-white/70 text-sm leading-relaxed">{rule}</p>
@@ -340,7 +340,7 @@ const VaultMainPanel: React.FC = () => {
           <div className="p-8 rounded-[32px] border border-white/10 bg-black/40 backdrop-blur-md">
             <h4 className="text-white font-black text-lg mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-cc-lime rounded-full" />
-              Recent Activity
+              최근 활동
             </h4>
             <div className="flex flex-col gap-3">
               {view.eligible ? (
@@ -349,7 +349,7 @@ const VaultMainPanel: React.FC = () => {
                     <div className="h-2 w-2 rounded-full bg-cc-lime animate-pulse" />
                     <p className="text-white/90 text-sm font-bold">외부 이용 내역 확인 완료</p>
                   </div>
-                  <span className="text-[11px] font-black text-cc-lime uppercase tracking-widest">Active</span>
+                  <span className="text-sm font-black text-cc-lime uppercase tracking-widest">Active</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
@@ -357,13 +357,13 @@ const VaultMainPanel: React.FC = () => {
                     <div className="h-2 w-2 rounded-full bg-white/20" />
                     <p className="text-white/50 text-sm">외부 이용 내역 대기 중</p>
                   </div>
-                  <span className="text-[11px] font-black text-white/20 uppercase tracking-widest">Idle</span>
+                  <span className="text-sm font-black text-white/20 uppercase tracking-widest">Idle</span>
                 </div>
               )}
               {view.usedAt && (
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
                   <p className="text-white/70 text-sm">금고 채우기 사용</p>
-                  <p className="text-white/40 text-xs font-mono">{formatDateTime(view.usedAt)}</p>
+                  <p className="text-white/40 text-sm font-mono">{formatDateTime(view.usedAt)}</p>
                 </div>
               )}
             </div>
@@ -375,15 +375,15 @@ const VaultMainPanel: React.FC = () => {
           <div className="p-1 rounded-[34px] bg-gradient-to-b from-cc-lime/30 to-transparent">
             <div className="p-8 rounded-[32px] bg-[#111] h-full flex flex-col gap-6">
               <div className="flex flex-col gap-1">
-                <p className="text-cc-lime text-[10px] font-black tracking-widest uppercase">Leveling Status</p>
-                <h4 className="text-white font-black text-lg">Reward Preview</h4>
+                <p className="text-cc-lime text-sm font-black tracking-widest uppercase">진행 현황</p>
+                <h4 className="text-white font-black text-lg">보상 미리보기</h4>
               </div>
 
               {rewardPreview.items && rewardPreview.items.length > 0 ? (
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="text-white/40 text-[11px] font-black uppercase tracking-widest">Progress</span>
+                      <span className="text-white/40 text-sm font-black uppercase tracking-widest">달성률</span>
                       <span className="text-cc-lime text-lg font-black">{rewardPreview.percent}%</span>
                     </div>
                     <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -394,9 +394,9 @@ const VaultMainPanel: React.FC = () => {
                   <div className="flex flex-col gap-3">
                     {rewardPreview.items.map((item, idx) => (
                       <div key={idx} className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/5">
-                        <p className="text-white/60 text-xs font-black uppercase tracking-tighter">{item.label}</p>
+                        <p className="text-white/60 text-sm font-black uppercase tracking-tighter">{item.label}</p>
                         <p className="text-white text-xl font-black">
-                          {item.amount?.toLocaleString()} <span className="text-xs text-white/30">{item.unit || 'PT'}</span>
+                          {item.amount?.toLocaleString()} <span className="text-sm text-white/30">{item.unit || 'PT'}</span>
                         </p>
                       </div>
                     ))}
@@ -412,7 +412,7 @@ const VaultMainPanel: React.FC = () => {
               )}
 
               <div className="mt-auto pt-6 border-t border-white/10">
-                <p className="text-[11px] text-white/40 leading-relaxed text-center">
+                <p className="text-sm text-white/40 leading-relaxed text-center">
                   활동 조건 충족 시 포인트 적립과 <br />
                   해금이 순차적으로 진행됩니다.
                 </p>

@@ -8,12 +8,9 @@ import {
   getMyTeam,
 } from "../api/teamBattleApi";
 import { TeamSeason, Team, LeaderboardEntry, ContributorEntry, TeamMembership } from "../types/teamBattle";
-import { TreeIcon, GiftIcon, StarIcon, BellIcon } from "../components/common/ChristmasDecorations";
-
-void TreeIcon;
-void GiftIcon;
-void StarIcon;
-void BellIcon;
+import GamePageShell from "../components/game/GamePageShell";
+import AnimatedNumber from "../components/common/AnimatedNumber";
+import FeatureGate from "../components/feature/FeatureGate";
 
 const normalizeIsoForDate = (value: string) => {
   const hasTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(value);
@@ -26,35 +23,32 @@ const TeamBattlePage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [contributors, setContributors] = useState<ContributorEntry[]>([]);
-  const [, setMyTeam] = useState<TeamMembership | null>(null);
+  const [myTeamData, setMyTeamData] = useState<TeamMembership | null>(null);
   const [contributorsLoading, setContributorsLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [joinBusy, setJoinBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lbLimit, setLbLimit] = useState(10);
+
+  // Pagination / Limits
+  const [lbLimit] = useState(10);
   const [lbOffset, setLbOffset] = useState(0);
-  const [contribLimit, setContribLimit] = useState(10);
+  const [contribLimit] = useState(10);
   const [contribOffset, setContribOffset] = useState(0);
 
-  void initialLoading;
-  void setLbLimit;
-  void setContribLimit;
+  void myTeamData;
 
+  // Time calculations
   const joinWindow = useMemo(() => {
     if (!season?.starts_at) return { closed: true, label: "-" };
-    // Z/+09:00 모두 파싱, timezone 미표기만 UTC로 보정
     const start = new Date(normalizeIsoForDate(season.starts_at)).getTime();
     const now = Date.now();
     if (now < start) return { closed: true, label: "시작 전" };
-
     const close = start + 24 * 60 * 60 * 1000;
     const remaining = close - now;
     if (remaining <= 0) return { closed: true, label: "마감" };
     const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const minutes = Math.floor((remaining / (1000 * 60)) % 60);
-    return { closed: false, label: `${hours}시간 ${minutes}분 남음` };
+    return { closed: false, label: `${hours}시간 남음` };
   }, [season?.starts_at]);
 
   const countdown = useMemo(() => {
@@ -62,12 +56,15 @@ const TeamBattlePage: React.FC = () => {
     const now = Date.now();
     const end = new Date(normalizeIsoForDate(season.ends_at)).getTime();
     const diff = end - now;
-    if (diff <= 0) return "종료";
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    if (diff <= 0) return "종료됨";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (days > 0) return `${days}일 ${hours}시간`;
     return `${hours}시간 ${minutes}분`;
   }, [season?.ends_at]);
 
+  // Data Loading
   const loadContributors = async (teamId: number, seasonId?: number) => {
     setContributorsLoading(true);
     try {
@@ -102,10 +99,11 @@ const TeamBattlePage: React.FC = () => {
       ]);
       setSeason(seasonData);
       setTeams(teamList);
-      setMyTeam(myTeamRes);
-      // 서버 기준 현재 소속이 없으면(selectedTeam stale 방지) 클라이언트 상태도 명시적으로 초기화
+      setMyTeamData(myTeamRes);
       setSelectedTeam(myTeamRes ? myTeamRes.team_id : null);
+
       await loadLeaderboard(seasonData?.id);
+
       const targetTeamId = myTeamRes?.team_id ?? selectedTeam;
       if (targetTeamId && seasonData) {
         loadContributors(targetTeamId, seasonData.id);
@@ -115,27 +113,24 @@ const TeamBattlePage: React.FC = () => {
       setError("팀 배틀 정보를 불러오지 못했습니다");
     } finally {
       setRefreshing(false);
-      setInitialLoading(false);
     }
   };
 
   useEffect(() => {
     loadCore();
-    const timer = setInterval(loadCore, 60 * 1000);
+    const timer = setInterval(loadCore, 30000);
     return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (season) {
-      loadLeaderboard(season.id);
-    }
-  }, [season?.id, lbLimit, lbOffset]);
 
   useEffect(() => {
     if (season && selectedTeam) {
       loadContributors(selectedTeam, season.id);
     }
-  }, [season?.id, selectedTeam, contribLimit, contribOffset]);
+  }, [selectedTeam, contribOffset, season?.id]);
+
+  useEffect(() => {
+    if (season) loadLeaderboard(season.id);
+  }, [lbOffset, season?.id]);
 
   const handleAutoAssign = async () => {
     setJoinBusy(true);
@@ -145,237 +140,230 @@ const TeamBattlePage: React.FC = () => {
       const res = await autoAssignTeam();
       setSelectedTeam(res.team_id);
       setContribOffset(0);
-      setMyTeam({ team_id: res.team_id, role: res.role, joined_at: new Date().toISOString() });
-      setMessage(`팀에 합류했습니다 (team #${res.team_id})`);
-      if (season) {
-        loadContributors(res.team_id, season.id);
-      }
-    } catch (err) {
-      console.error(err);
-      const detail = (err as any)?.response?.data?.detail;
-      const status = (err as any)?.response?.status;
-      if (detail === "TEAM_SELECTION_CLOSED") {
-        setError("팀 선택 창이 닫혔습니다 (시작 후 24시간 제한)");
-      } else if (detail === "ALREADY_IN_TEAM") {
-        setError("이미 팀에 가입되어 있습니다");
-      } else if (detail === "TEAM_LOCKED") {
-        setError("팀이 잠금 상태입니다. 지민이에게 문의하세요.");
-      } else if (status === 401) {
-        setError("로그인이 필요합니다");
-      } else {
-        setError("팀 자동 배정에 실패했습니다");
-      }
+      setMyTeamData({ team_id: res.team_id, role: res.role, joined_at: new Date().toISOString() });
+      setMessage(`팀 #${res.team_id}에 배정되었습니다`);
+      if (season) loadContributors(res.team_id, season.id);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      if (detail === "TEAM_SELECTION_CLOSED") setError("배정 기간이 종료되었습니다.");
+      else if (detail === "ALREADY_IN_TEAM") setError("이미 팀에 소속되어 있습니다.");
+      else setError("팀 배정에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setJoinBusy(false);
     }
   };
 
-  const joinButtonLabel = joinWindow.closed ? "선택 마감" : joinBusy ? "배정 중..." : "미스터리 팀 배정";
+  // derived state
   const myTeamName = useMemo(() => teams.find((t) => t.id === selectedTeam)?.name, [teams, selectedTeam]);
-  const showTeamSelectPanel = !joinWindow.closed && selectedTeam === null;
-  const showContribPanel = selectedTeam !== null;
-  const showTopGrid = showTeamSelectPanel || showContribPanel;
 
-  void joinButtonLabel;
-  void showTopGrid;
+  // VS Gauge Data (Assume 2 teams for best visual, fallback for more)
+  const vsData = useMemo(() => {
+    if (leaderboard.length < 2) return null;
+    const t1 = leaderboard[0];
+    const t2 = leaderboard[1];
+    const total = t1.points + t2.points;
+    if (total === 0) return { t1: 50, t2: 50, t1Points: 0, t2Points: 0 };
+    return {
+      t1: Math.round((t1.points / total) * 100),
+      t2: Math.round((t2.points / total) * 100),
+      t1Points: t1.points,
+      t2Points: t2.points,
+      t1Name: t1.team_name,
+      t2Name: t2.team_name,
+    };
+  }, [leaderboard]);
 
-  const handleLbPrev = () => setLbOffset(Math.max(lbOffset - lbLimit, 0));
-  const handleLbNext = () => {
-    if (leaderboard.length < lbLimit) return;
-    setLbOffset(lbOffset + lbLimit);
-  };
-  const handleContribPrev = () => setContribOffset(Math.max(contribOffset - contribLimit, 0));
-  const handleContribNext = () => {
-    if (contributors.length < contribLimit) return;
-    setContribOffset(contribOffset + contribLimit);
-  };
-
-  return (
-    <div className="relative space-y-8">
-      {/* Background Atmosphere: Battle Clash */}
-      <div className="pointer-events-none absolute -left-[20%] -top-[20%] h-[800px] w-[800px] rounded-full bg-blue-600/10 blur-[120px] mix-blend-screen" />
-      <div className="pointer-events-none absolute -right-[20%] top-[10%] h-[800px] w-[800px] rounded-full bg-red-600/10 blur-[120px] mix-blend-screen" />
-
-      {/* Header Section: Digital Billboard Style */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
-        <div className="pointer-events-none absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-10" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-        <div className="relative flex flex-col items-center justify-between gap-6 p-8 md:flex-row">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white/10 to-transparent shadow-inner ring-1 ring-white/10">
-              <span className="text-3xl">⚔️</span>
+  const content = (
+    <div className="space-y-8">
+      {/* 2-Team VS Gauge (Hero) - Only show if exactly 2 teams roughly or if top 2 dominate */}
+      {vsData && (
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-1 shadow-2xl backdrop-blur-xl">
+          <div className="relative flex h-24 w-full overflow-hidden rounded-[1.3rem]">
+            {/* Team A Bar */}
+            <div
+              className="relative flex items-center justify-start bg-gradient-to-r from-blue-900 to-blue-600 pl-6 transition-all duration-1000 ease-out"
+              style={{ width: `${vsData.t1}%` }}
+            >
+              <div className="z-10 text-left">
+                <p className="text-sm font-bold text-white/80">{vsData.t1Name}</p>
+                <p className="text-2xl font-black text-white drop-shadow-md"><AnimatedNumber value={vsData.t1Points} /></p>
+              </div>
+              <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-[length:20px_20px]" />
             </div>
-            <div>
-              <p className="text-base font-bold uppercase tracking-widest text-white/40">시즌 이벤트</p>
-              <h1 className="text-3xl font-black text-white italic tracking-tight">팀 배틀</h1>
-              <p className="flex items-center gap-2 text-base text-white/60">
-                <span className={`inline-block h-2 w-2 rounded-full ${joinWindow.closed ? "bg-red-500" : "bg-emerald-500 animate-pulse"}`} />
-                {joinWindow.closed ? "팀 배정 마감" : "팀 배정 진행 중"}
-              </p>
+
+            {/* VS Divider */}
+            <div className="absolute left-1/2 top-0 z-20 flex h-full w-12 -translate-x-1/2 items-center justify-center bg-black skew-x-[-12deg]">
+              <span className="text-xl font-black italic text-white/50 skew-x-[12deg]">VS</span>
+            </div>
+
+            {/* Team B Bar */}
+            <div
+              className="relative flex items-center justify-end bg-gradient-to-l from-red-900 to-red-600 pr-6 transition-all duration-1000 ease-out"
+              style={{ width: `${vsData.t2}%` }}
+            >
+              <div className="z-10 text-right">
+                <p className="text-sm font-bold text-white/80">{vsData.t2Name}</p>
+                <p className="text-2xl font-black text-white drop-shadow-md"><AnimatedNumber value={vsData.t2Points} /></p>
+              </div>
+              <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-[length:20px_20px]" />
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
-            <p className="text-base font-bold uppercase tracking-widest text-white/40">남은 시간</p>
-            <div className="font-mono text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-              {countdown}
-            </div>
-            <button
-              onClick={loadCore}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 text-base text-white/40 hover:text-white transition-colors"
-            >
-              <span className={`${refreshing ? "animate-spin" : ""}`}>↻</span>
-              데이터 갱신
+          <div className="mt-3 flex items-center justify-center gap-2 text-sm text-white/40">
+            <span>남은 시간: <span className="font-mono font-bold text-white">{countdown}</span></span>
+            <span>•</span>
+            <button onClick={loadCore} disabled={refreshing} className="hover:text-white">
+              <span className={refreshing ? "animate-spin inline-block" : ""}>↻</span> 갱신
             </button>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Rule Ticker */}
-      <div className="flex items-center gap-3 overflow-hidden rounded-full border border-white/5 bg-white/[0.02] px-4 py-2 text-base text-white/50 backdrop-blur-sm">
-        <span className="font-bold text-cc-lime">안내</span>
-        <div className="flex gap-4 overflow-hidden whitespace-nowrap">
-          <span>• 자동 배정 (밸런스 기준)</span>
-          <span>• 시작 후 24시간 내 배정 가능</span>
-          <span>• 게임 1회당 10점 (일일 최대 500점)</span>
-          <span>• 상위 팀 전원 보상 지급</span>
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-6">
-          {/* Team Select / Status Card */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-xl backdrop-blur-md">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">내 팀 현황</h2>
-              {myTeamName && (
-                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-bold text-white">
-                  {myTeamName}
-                </span>
-              )}
-            </div>
+      {/* Main Grid: My Status & Leaderboard */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left: My Team Status */}
+        <div className="flex flex-col gap-6">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6 shadow-xl backdrop-blur-md">
+            <h2 className="text-lg font-bold text-white">마이 팀</h2>
 
             {!selectedTeam ? (
-              // Join Interface (Mission Control Style)
-              <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
-                <div className="relative">
-                  <div className="absolute inset-0 animate-ping rounded-full bg-white/10 opacity-50" />
-                  <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-black/50 text-4xl shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                    ❓
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white">소속된 팀이 없습니다</h3>
-                  <p className="text-base text-white/50">시스템이 전력을 분석하여 최적의 팀으로 배정합니다.</p>
+              <div className="mt-6 flex flex-col items-center gap-6 py-8">
+                <div className="h-20 w-20 rounded-full bg-white/5 p-4 text-4xl shadow-inner ring-1 ring-white/10">❓</div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-white">소속 팀이 없습니다</p>
+                  <p className="mt-2 text-sm text-white/50">팀에 합류하여 승리를 이끄세요! 우승 팀 전원에게 보상이 지급됩니다.</p>
                 </div>
                 <button
                   onClick={handleAutoAssign}
-                  disabled={joinBusy || refreshing || joinWindow.closed}
-                  className="group relative overflow-hidden rounded-xl bg-white px-8 py-5 font-bold text-black transition-transform active:scale-95 disabled:opacity-50"
+                  disabled={joinBusy || joinWindow.closed}
+                  className="w-full rounded-xl bg-white py-4 text-base font-bold text-black transition-transform active:scale-[0.98] disabled:opacity-50"
                 >
-                  <span className="relative z-10 flex items-center gap-2 text-lg">
-                    {joinBusy ? "분석 중..." : "팀 자동 배정받기"}
-                  </span>
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-gray-200 to-transparent transition-transform group-hover:translate-x-full" />
+                  {joinWindow.closed ? "배정 마감" : joinBusy ? "배정 중..." : "팀 배정받기"}
                 </button>
-                {joinWindow.closed && (
-                  <p className="text-sm font-bold text-red-400">※ 현재 팀 배정 기간이 종료되었습니다.</p>
-                )}
               </div>
             ) : (
-              // Contribution Stats
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-base text-white/60">
-                  <span>최근 기여자</span>
-                  <div className="flex gap-2">
-                    <button onClick={handleContribPrev} disabled={contribOffset === 0} className="hover:text-white disabled:opacity-30">←</button>
-                    <button onClick={handleContribNext} disabled={contributors.length < contribLimit} className="hover:text-white disabled:opacity-30">→</button>
+              <div className="mt-6 space-y-6">
+                {/* My Team Badge */}
+                <div className="flex items-center gap-4 rounded-2xl bg-black/30 p-4 ring-1 ring-white/10">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl shadow-lg">
+                    🛡️
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase text-white/40">Affiliation</p>
+                    <p className="text-xl font-black text-white">{myTeamName}</p>
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  {contributorsLoading ? (
-                    <div className="py-8 text-center text-base text-white/30">데이터 로딩 중...</div>
-                  ) : contributors.length > 0 ? (
-                    contributors.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 hover:bg-white/[0.05]">
+
+                {/* My Contribution List */}
+                <div>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white/60">팀 기여도 랭킹</h3>
+                    <div className="flex gap-2">
+                      <button onClick={() => setContribOffset(Math.max(0, contribOffset - contribLimit))} disabled={contribOffset === 0} className="rounded bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 disabled:opacity-30">Scan</button>
+                      <button onClick={() => setContribOffset(contribOffset + contribLimit)} disabled={contributors.length < contribLimit} className="rounded bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 disabled:opacity-30">Next</button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {contributorsLoading && contributors.length === 0 ? (
+                      <div className="py-4 text-center text-sm text-white/30">Loading...</div>
+                    ) : contributors.map((c, i) => (
+                      <div key={`${c.user_id}-${i}`} className="flex items-center justify-between rounded-xl bg-white/[0.02] px-4 py-2 ring-1 ring-white/5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-sm font-bold text-white/70">
-                            {contribOffset + i + 1}
-                          </div>
-                          <div>
-                            <p className="text-base font-bold text-white">{c.nickname || "Unknown"}</p>
-                            <p className="text-sm text-white/40">유저 ID: {c.user_id}</p>
-                          </div>
+                          <span className={`text-sm font-bold ${i < 3 && contribOffset === 0 ? "text-yellow-400" : "text-white/30"}`}>{contribOffset + i + 1}</span>
+                          <span className="text-sm font-medium text-white/90">{c.nickname || `User ${c.user_id}`}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-mono text-lg font-bold text-cc-lime">+{c.points}</p>
-                        </div>
+                        <span className="font-mono text-sm font-bold text-cc-lime">+{c.points.toLocaleString()}</span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="py-8 text-center text-sm text-white/30">기여 내역이 없습니다.</div>
-                  )}
+                    ))}
+                    {contributors.length === 0 && !contributorsLoading && (
+                      <div className="py-4 text-center text-sm text-white/30">기여 내역이 없습니다.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Leaderboard */}
-        <div className="h-full">
-          <div className="sticky top-6 overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-xl backdrop-blur-md">
-            <div className="border-b border-white/5 bg-white/[0.02] p-4">
-              <h3 className="font-bold text-white">팀 순위표</h3>
+        {/* Right: Global Leaderboard */}
+        <div className="flex flex-col gap-6">
+          <div className="relative h-full overflow-hidden rounded-[2rem] border border-white/10 bg-black/20 p-6 shadow-xl backdrop-blur-md">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">전체 팀 순위</h2>
+              <div className="flex gap-2 text-xs">
+                <button onClick={() => setLbOffset(Math.max(0, lbOffset - lbLimit))} disabled={lbOffset === 0} className="rounded bg-white/5 px-2 py-1 text-white disabled:opacity-30">◀</button>
+                <button onClick={() => setLbOffset(lbOffset + lbLimit)} disabled={leaderboard.length < lbLimit} className="rounded bg-white/5 px-2 py-1 text-white disabled:opacity-30">▶</button>
+              </div>
             </div>
-            <div className="divide-y divide-white/5 p-2">
-              {leaderboard.map((row, idx) => (
-                <div key={row.team_id} className={`flex items-center justify-between rounded-xl p-3 ${selectedTeam === row.team_id ? "bg-white/10 ring-1 ring-white/20" : ""}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow-inner ${idx === 0 ? "bg-yellow-500 text-black" :
+
+            <div className="flex flex-col gap-3">
+              {leaderboard.map((team, idx) => (
+                <div
+                  key={team.team_id}
+                  className={`relative flex items-center justify-between overflow-hidden rounded-2xl p-4 transition-all ${idx === 0 ? "bg-gradient-to-r from-yellow-500/20 to-transparent ring-1 ring-yellow-500/50" :
+                    idx === 1 ? "bg-gradient-to-r from-gray-400/20 to-transparent ring-1 ring-gray-400/30" :
+                      idx === 2 ? "bg-gradient-to-r from-orange-700/20 to-transparent ring-1 ring-orange-700/30" : "bg-white/5 ring-1 ring-white/10"
+                    }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full text-lg font-black ${idx === 0 ? "bg-yellow-400 text-black shadow-lg shadow-yellow-500/50" :
                       idx === 1 ? "bg-gray-300 text-black" :
-                        idx === 2 ? "bg-orange-700 text-white" :
-                          "bg-white/10 text-white/50"
+                        idx === 2 ? "bg-orange-600 text-white" : "bg-white/10 text-white/50"
                       }`}>
-                      {idx + 1}
+                      {lbOffset + idx + 1}
                     </div>
                     <div>
-                      <p className="text-base font-bold text-white">{row.team_name}</p>
-                      <p className="text-sm text-white/40">{row.member_count}명</p>
+                      <p className="text-base font-bold text-white">{team.team_name}</p>
+                      <p className="text-xs text-white/50">{team.member_count} Members</p>
                     </div>
                   </div>
-                  <p className="font-mono font-bold text-white">{row.points.toLocaleString()}</p>
+                  <div className="text-right">
+                    <p className="font-mono text-xl font-black text-white">{team.points.toLocaleString()}</p>
+                    <p className="text-xs text-white/40">POINTS</p>
+                  </div>
                 </div>
               ))}
               {leaderboard.length === 0 && (
-                <div className="py-8 text-center text-sm text-white/30">순위 데이터 없음</div>
+                <div className="py-12 text-center text-sm text-white/30">
+                  기록된 점수가 없습니다.<br />게임을 플레이하여 첫 점수를 획득하세요!
+                </div>
               )}
-            </div>
-
-            <div className="flex justify-center border-t border-white/5 p-2">
-              <div className="flex gap-4 text-base text-white/40">
-                <button onClick={handleLbPrev} disabled={lbOffset === 0} className="hover:text-white disabled:opacity-30">이전</button>
-                <span>{lbOffset + 1}-{lbOffset + leaderboard.length}</span>
-                <button onClick={handleLbNext} disabled={leaderboard.length < lbLimit} className="hover:text-white disabled:opacity-30">다음</button>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
       {message && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-bounce-in rounded-full border border-cc-lime/20 bg-black/80 px-6 py-3 text-sm font-bold text-cc-lime backdrop-blur-xl shadow-2xl">
-          ✅ {message}
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce-in rounded-2xl border border-cc-lime/20 bg-black/90 px-6 py-4 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cc-lime/20 text-cc-lime">✓</div>
+            <p className="text-sm font-bold text-white">{message}</p>
+          </div>
         </div>
       )}
       {error && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-bounce-in rounded-full border border-red-500/20 bg-black/80 px-6 py-3 text-sm font-bold text-red-400 backdrop-blur-xl shadow-2xl">
-          ⚠️ {error}
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce-in rounded-2xl border border-red-500/20 bg-black/90 px-6 py-4 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-500">!</div>
+            <p className="text-sm font-bold text-white">{error}</p>
+          </div>
         </div>
       )}
+
+      {/* Decorative Background Elements */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-red-500/10 blur-[100px]" />
+      </div>
     </div>
+  );
+
+  return (
+    <FeatureGate feature="TEAM_BATTLE">
+      <GamePageShell title="TEAM BATTLE" subtitle="Season 1">
+        {content}
+      </GamePageShell>
+    </FeatureGate>
   );
 };
 
