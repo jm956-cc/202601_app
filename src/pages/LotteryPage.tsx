@@ -274,7 +274,7 @@ const LotteryPage: React.FC = () => {
 
   return (
     <FeatureGate feature="LOTTERY">
-      <GamePageShell title="크리스마스 복권" subtitle="Special Game Lottery">
+      <GamePageShell title="지민코드 복권" subtitle="Special Game Lottery">
         {content}
       </GamePageShell>
     </FeatureGate>

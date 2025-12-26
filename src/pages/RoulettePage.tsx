@@ -257,7 +257,7 @@ const RoulettePage: React.FC = () => {
                 🪙
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-cc-gold">Reward</p>
+                <p className="text-sm font-bold uppercase tracking-wider text-cc-gold">획득 보상</p>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl font-black text-white drop-shadow-lg">
                     <AnimatedNumber value={rewardToast.value} from={0} />
@@ -307,8 +307,8 @@ const RoulettePage: React.FC = () => {
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 pr-5 backdrop-blur-md">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm">🏁</div>
                   <div className="flex flex-col leading-none">
-                    <span className="text-[10px] text-white/40">Remaining Spins</span>
-                    <span className="font-mono text-sm font-bold text-white">
+                    <span className="text-sm text-white/40">남은 기회</span>
+                    <span className="font-mono text-base font-bold text-white">
                       {remainingSpins === null ? "-" : remainingSpins === 0 ? "∞" : <AnimatedNumber value={remainingSpins} />}
                     </span>
                   </div>
@@ -317,8 +317,8 @@ const RoulettePage: React.FC = () => {
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 pr-5 backdrop-blur-md">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm">💰</div>
                   <div className="flex flex-col leading-none">
-                    <span className="text-[10px] text-white/40">{tokenLabel}</span>
-                    <span className="font-mono text-sm font-bold text-white">
+                    <span className="text-sm text-white/40">{tokenLabel}</span>
+                    <span className="font-mono text-base font-bold text-white">
                       {tokenBalance !== null ? <AnimatedNumber value={tokenBalance} /> : "-"}
                     </span>
                   </div>
@@ -328,7 +328,7 @@ const RoulettePage: React.FC = () => {
               {/* Action Area */}
               <div className="space-y-4">
                 {playErrorMessage && (
-                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-200">
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-200">
                     ⚠️ {playErrorMessage}
                   </div>
                 )}
@@ -350,13 +350,13 @@ const RoulettePage: React.FC = () => {
                     {playMutation.isPending ? (
                       <>
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                        <span className="text-lg font-black text-black">SPINNING...</span>
+                        <span className="text-lg font-black text-black">추첨 중...</span>
                       </>
                     ) : (
                       <>
                         <span className="text-xl">💎</span>
                         <span className="text-lg font-black tracking-wide text-black opacity-90">
-                          {!isSpinning && displayedResult ? "SPIN AGAIN" : "SPIN ROULETTE"}
+                          {!isSpinning && displayedResult ? "다시 돌리기" : "룰렛 시작"}
                         </span>
                       </>
                     )}
@@ -371,14 +371,14 @@ const RoulettePage: React.FC = () => {
                 <div className="relative overflow-hidden rounded-[1.8rem] border border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent px-8 py-8">
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-cc-gold/50 to-transparent" />
 
-                  <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/40">WINNER</p>
+                  <p className="text-sm font-bold uppercase tracking-[0.4em] text-white/40">당첨 결과</p>
                   <h3 className="mt-2 text-3xl font-black text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
                     {displayedResult.segment.label}
                   </h3>
 
                   {displayedResult.reward_type && displayedResult.reward_type !== "NONE" && (
                     <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cc-gold/20 bg-cc-gold/10 px-6 py-2">
-                      <span className="text-sm font-bold text-cc-gold">
+                      <span className="text-base font-bold text-cc-gold">
                         +{Number(displayedResult.reward_value).toLocaleString()} {displayedResult.reward_type}
                       </span>
                     </div>
@@ -387,9 +387,7 @@ const RoulettePage: React.FC = () => {
               </div>
             )}
 
-            <p className="text-center text-[10px] font-medium text-white/30">
-              * 결과는 블록체인 노드가 아닌 중앙 서버 RNG에 의해 결정됩니다.
-            </p>
+
           </div>
         </div>
       </div>
