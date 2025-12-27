@@ -131,6 +131,11 @@ class RewardService:
                     (GameTokenType.DICE_TOKEN, 2),
                     (GameTokenType.LOTTERY_TICKET, 1)
                 ]
+            elif reward_amount == 20:  # Ticket bomb: roulette 10 + dice 10
+                bundle_items = [
+                    (GameTokenType.ROULETTE_COIN, 10),
+                    (GameTokenType.DICE_TOKEN, 10),
+                ]
             
             for token_type, amount in bundle_items:
                 self.grant_ticket(db, user_id=user_id, token_type=token_type, amount=amount, meta=meta)

@@ -55,6 +55,19 @@ class VaultTimerState(BaseModel):
     locked_expires_at: datetime | None = None
 
 
+class VaultAdminStateResponse(BaseModel):
+    user_id: int
+    eligible: bool
+    vault_balance: int
+    locked_balance: int
+    available_balance: int
+    cash_balance: int
+    expires_at: datetime | None = None
+    locked_expires_at: datetime | None = None
+    accrual_multiplier: float | None = None
+    program_key: str | None = None
+
+
 class VaultTopItem(BaseModel):
     user_id: int
     program_key: str

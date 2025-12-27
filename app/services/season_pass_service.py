@@ -90,6 +90,16 @@ class SeasonPassService:
         ).scalars().all()
         claimed_levels = {log.level for log in reward_logs}
 
+        recovered_levels = self._recover_missing_auto_claims(
+            db,
+            progress=progress,
+            season_id=season.id,
+            levels=levels,
+            claimed_levels=claimed_levels,
+        )
+        if recovered_levels:
+            claimed_levels.update(recovered_levels)
+
         today = now.date() if isinstance(now, datetime) else now
         # "오늘 스탬프"는 일일 체크인(오늘 날짜 period_key)만 인정합니다.
         daily_key = today.isoformat()
@@ -496,6 +506,75 @@ class SeasonPassService:
             .where(SeasonPassLevel.season_id == season_id, SeasonPassLevel.required_xp <= current_xp)
             .order_by(SeasonPassLevel.level)
         ).scalars().all()
+
+    def _recover_missing_auto_claims(
+        self,
+        db: Session,
+        *,
+        progress: SeasonPassProgress,
+        season_id: int,
+        levels: list[SeasonPassLevel],
+        claimed_levels: set[int],
+    ) -> set[int]:
+        """Grant any unlocked auto-claim levels that are missing reward logs.
+
+        This is a defensive guardrail to heal previously missed auto-claims
+        (e.g., worker crash, delivery failure) when a user fetches status.
+        """
+
+        unlocked_auto_levels = [
+            level for level in levels if level.auto_claim and level.required_xp <= progress.current_xp
+        ]
+        missing_levels = [lvl for lvl in unlocked_auto_levels if lvl.level not in claimed_levels]
+        if not missing_levels:
+            return set()
+
+        granted: set[int] = set()
+        for level in missing_levels:
+            reward_meta = {
+                "season_id": season_id,
+                "level": level.level,
+                "source": "SEASON_PASS_AUTO_CLAIM_RECOVERY",
+                "trigger": "STATUS",
+            }
+            try:
+                self.reward_service.deliver(
+                    db,
+                    user_id=progress.user_id,
+                    reward_type=level.reward_type,
+                    reward_amount=level.reward_amount,
+                    meta=reward_meta,
+                )
+            except Exception:
+                self.logger.warning(
+                    "Season pass auto-claim recovery failed",
+                    extra={
+                        "user_id": progress.user_id,
+                        "season_id": season_id,
+                        "level": level.level,
+                        "source": "STATUS",
+                        "current_xp": progress.current_xp,
+                    },
+                    exc_info=True,
+                )
+                continue
+
+            reward_log = SeasonPassRewardLog(
+                user_id=progress.user_id,
+                season_id=season_id,
+                progress_id=progress.id,
+                level=level.level,
+                reward_type=level.reward_type,
+                reward_amount=level.reward_amount,
+                claimed_at=datetime.utcnow(),
+            )
+            db.add(reward_log)
+            granted.add(level.level)
+
+        if granted:
+            db.commit()
+
+        return granted
 
     def _auto_claim_initial_level(self, db: Session, progress: SeasonPassProgress) -> None:
         """Auto-claim level 1 reward on first season-pass creation (if configured as auto_claim)."""

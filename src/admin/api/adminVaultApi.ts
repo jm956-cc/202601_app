@@ -31,8 +31,15 @@ export interface VaultEligibilityResponse {
 
 export interface VaultTimerState {
     user_id: number;
+    eligible: boolean;
+    vault_balance: number;
     locked_balance: number;
+    available_balance: number;
+    cash_balance: number;
+    expires_at: string | null;
     locked_expires_at: string | null;
+    accrual_multiplier?: number | null;
+    program_key?: string | null;
 }
 
 export const getVaultDefaultProgram = async (): Promise<VaultProgramResponse> => {

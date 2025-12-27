@@ -458,14 +458,40 @@ const VaultAdminPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
+                                    <p className="text-xs text-gray-500 mb-1">Eligibility</p>
+                                    <p className={`text-base font-black ${timerState ? (timerState.eligible ? "text-[#91F402]" : "text-red-400") : "text-gray-500"}`}>
+                                        {timerState ? (timerState.eligible ? "허용" : "차단") : "조회 전"}
+                                    </p>
+                                    <p className="text-[11px] text-gray-500 mt-1">Program: {timerState?.program_key || "NEW_MEMBER_VAULT"}</p>
+                                </div>
                                 <div className="rounded-lg border border-[#222] bg-[#111] p-4">
                                     <p className="text-xs text-gray-500 mb-1">Locked Balance</p>
                                     <p className="text-2xl font-black text-white">{(timerState?.locked_balance ?? 0).toLocaleString()}원</p>
                                 </div>
-                                <div className="rounded-lg border border-[#222] bg-[#111] p-4 md:col-span-2">
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
+                                    <p className="text-xs text-gray-500 mb-1">Available Balance</p>
+                                    <p className="text-2xl font-black text-white">{(timerState?.available_balance ?? 0).toLocaleString()}원</p>
+                                </div>
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
+                                    <p className="text-xs text-gray-500 mb-1">Cash Balance</p>
+                                    <p className="text-2xl font-black text-white">{(timerState?.cash_balance ?? 0).toLocaleString()}원</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
+                                    <p className="text-xs text-gray-500 mb-1">Vault Balance (Mirror)</p>
+                                    <p className="text-2xl font-black text-white">{(timerState?.vault_balance ?? 0).toLocaleString()}원</p>
+                                </div>
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
+                                    <p className="text-xs text-gray-500 mb-1">Accrual Multiplier</p>
+                                    <p className="text-xl font-black text-white">{timerState?.accrual_multiplier ?? "조회 전"}</p>
+                                </div>
+                                <div className="rounded-lg border border-[#222] bg-[#111] p-4">
                                     <p className="text-xs text-gray-500 mb-1">만료 예정 시각</p>
-                                    <p className="text-base font-bold text-white">{timerState?.locked_expires_at || "미설정"}</p>
+                                    <p className="text-base font-bold text-white">{timerState?.locked_expires_at || timerState?.expires_at || "미설정"}</p>
                                 </div>
                             </div>
 
