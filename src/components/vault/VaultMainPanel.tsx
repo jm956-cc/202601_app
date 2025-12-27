@@ -43,7 +43,7 @@ const formatDateTime = (d: Date | null): string | null => {
   }
 };
 
-const CountdownTimer: React.FC<{ expiresAt: Date }> = ({ expiresAt }) => {
+const CountdownTimer: React.FC<{ expiresAt: Date }> = React.memo(({ expiresAt }) => {
   const [isWarning, setIsWarning] = useState(false);
 
   useEffect(() => {
@@ -76,9 +76,9 @@ const CountdownTimer: React.FC<{ expiresAt: Date }> = ({ expiresAt }) => {
       />
     </div>
   );
-};
+});
 
-const VaultVisual: React.FC<{ stateLabel: string; eligible: boolean }> = ({ stateLabel, eligible }) => {
+const VaultVisual: React.FC<{ stateLabel: string; eligible: boolean }> = React.memo(({ stateLabel, eligible }) => {
   return (
     <div className="relative aspect-square w-full max-w-[280px] mx-auto">
       {/* Glow background */}
@@ -121,9 +121,9 @@ const VaultVisual: React.FC<{ stateLabel: string; eligible: boolean }> = ({ stat
       </div>
     </div>
   );
-};
+});
 
-const VaultMainPanel: React.FC = () => {
+const VaultMainPanel: React.FC = React.memo(() => {
   const [vaultModalOpen, setVaultModalOpen] = useState(false);
 
   const vault = useQuery({
@@ -175,7 +175,7 @@ const VaultMainPanel: React.FC = () => {
     if (view.recommendedAction === "OPEN_VAULT_MODAL" && !vaultModalOpen) {
       setVaultModalOpen(true);
     }
-  }, [view.recommendedAction]);
+  }, [view.recommendedAction, vaultModalOpen]);
 
   const unlockRules = useMemo(() => {
     const parsed = parseVaultUnlockRules(view.unlockRulesJson);
@@ -284,9 +284,9 @@ const VaultMainPanel: React.FC = () => {
       </div>
 
       {/* 2. Balance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex justify-center">
         {/* Locked Box */}
-        <div className="relative group">
+        <div className="relative group w-full max-w-2xl">
           <div className="absolute inset-0 bg-cc-lime/5 blur-xl group-hover:bg-cc-lime/10 transition-colors rounded-[32px]" />
           <div className="relative p-8 rounded-[32px] border border-white/5 bg-white/5 backdrop-blur-md overflow-hidden min-h-[180px] flex flex-col justify-between">
             <div className="absolute -right-8 -bottom-8 w-32 h-32 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -297,21 +297,6 @@ const VaultMainPanel: React.FC = () => {
               <h3 className="text-cc-lime text-4xl font-black">{formatWon(view.vaultBalance)}</h3>
             </div>
             <p className="text-white/30 text-sm mt-4">해금 시 실시간으로 보유 머니에 합산됩니다.</p>
-          </div>
-        </div>
-
-        {/* Cash Box */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-blue-500/5 blur-xl group-hover:bg-blue-500/10 transition-colors rounded-[32px]" />
-          <div className="relative p-8 rounded-[32px] border border-white/5 bg-white/5 backdrop-blur-md overflow-hidden min-h-[180px] flex flex-col justify-between">
-            <div className="absolute -right-8 -bottom-8 w-32 h-32 opacity-10 group-hover:opacity-20 transition-opacity">
-              <img src="/images/wallet.svg" className="h-full w-full object-contain invert brightness-200" alt="" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <p className="text-white/40 text-sm font-black tracking-widest uppercase">보유 머니</p>
-              <h3 className="text-white text-4xl font-black">{formatWon(view.cashBalance)}</h3>
-            </div>
-            <p className="text-white/30 text-sm mt-4">현재 적립된 금고 보유머니입니다.</p>
           </div>
         </div>
       </div>
@@ -430,6 +415,6 @@ const VaultMainPanel: React.FC = () => {
       />
     </section>
   );
-};
+});
 
 export default VaultMainPanel;

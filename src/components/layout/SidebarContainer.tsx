@@ -1,6 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/authStore";
+import { useSeasonPassStatus } from "../../hooks/useSeasonPass";
 
 const baseAccent = "#d2fd9c";
 
@@ -90,7 +91,7 @@ const MobileTiles: ModuleTile[] = [
   },
 ];
 
-const Logo: React.FC = () => (
+const Logo: React.FC = memo(() => (
   <div className="flex items-center gap-5" aria-label="Company logo">
     <div className="relative h-[27px] w-[26px] overflow-hidden rounded-[18px]">
       <img
@@ -102,18 +103,18 @@ const Logo: React.FC = () => (
     </div>
     <p className="text-[16px] font-semibold tracking-[-0.32px] text-white">CC CASINO</p>
   </div>
-);
+));
 
-const GuideButton: React.FC = () => (
+const GuideButton: React.FC = memo(() => (
   <Link
     to="/guide"
     className="shrink-0 rounded-[2px] bg-[#d2fd9c] px-[14px] py-[11px] text-[10px] tracking-[-0.2px] text-black hover:bg-[#b8e685]"
   >
     홈페이지 가이드
   </Link>
-);
+));
 
-const LogoutButton: React.FC = () => {
+const LogoutButton: React.FC = memo(() => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -131,12 +132,13 @@ const LogoutButton: React.FC = () => {
       로그아웃
     </button>
   );
-};
+});
 
-const UserBadge: React.FC = () => {
+const UserBadge: React.FC = memo(() => {
   const { user } = useAuth();
+  const { data: seasonPass } = useSeasonPassStatus();
   const name = (user?.nickname || user?.external_id || "지민").toString();
-  const level = user?.level ?? 1;
+  const level = seasonPass?.current_level ?? user?.level ?? 1;
 
   return (
     <div className="rounded-full border border-white/15 bg-white/5 px-3 py-[6px] text-[12px] leading-none text-white/85">
@@ -147,9 +149,9 @@ const UserBadge: React.FC = () => {
       </span>
     </div>
   );
-};
+});
 
-const DesktopSidebarContent: React.FC = () => {
+const DesktopSidebarContent: React.FC = memo(() => {
   return (
     <div className="hidden h-full w-full flex-col overflow-hidden lg:flex">
       <div className="flex flex-1 flex-col gap-[49px] overflow-y-auto px-[20px] py-[30px]">
@@ -291,9 +293,9 @@ const DesktopSidebarContent: React.FC = () => {
       </footer>
     </div>
   );
-};
+});
 
-const MobileSidebarContent: React.FC = () => {
+const MobileSidebarContent: React.FC = memo(() => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden lg:hidden">
       <div className="flex flex-1 flex-col gap-[20px] bg-black px-[20px] pb-[30px] pt-[20px]">
@@ -363,9 +365,9 @@ const MobileSidebarContent: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
-export const SidebarMobileFooter: React.FC<{ className?: string }> = ({ className }) => {
+export const SidebarMobileFooter: React.FC<{ className?: string }> = memo(({ className }) => {
   return (
     <footer className={"shrink-0 bg-[#394508] px-[20px] py-[31px] text-[#d2fd9c] " + (className ?? "")}>
       <div className="flex flex-col gap-[12px]">
@@ -434,15 +436,15 @@ export const SidebarMobileFooter: React.FC<{ className?: string }> = ({ classNam
       </div>
     </footer>
   );
-};
+});
 
-const SidebarContainer: React.FC = () => {
+const SidebarContainer: React.FC = memo(() => {
   return (
     <header className="landing-font h-full w-full">
       <DesktopSidebarContent />
       <MobileSidebarContent />
     </header>
   );
-};
+});
 
 export default SidebarContainer;

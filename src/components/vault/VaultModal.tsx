@@ -48,16 +48,16 @@ const VaultModal: React.FC<Props> = ({ open, onClose, ctaPayload, unlockRulesJso
 
   return (
     <Modal title={copy.title} open={open} onClose={onClose}>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <div className="p-5 rounded-[24px] bg-white/5 border border-white/5">
-            <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{copy.body}</p>
+      <div className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl sm:rounded-[24px] bg-white/5 border border-white/5">
+            <p className="text-white/80 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">{copy.body}</p>
           </div>
 
           {isTicketZero && (
-            <div className="p-4 rounded-[20px] bg-gradient-to-r from-cc-lime/20 to-cc-lime/5 border border-cc-lime/30 flex items-center gap-4">
-              <span className="text-2xl">🔥</span>
-              <p className="text-sm font-black text-cc-lime">
+            <div className="p-3 sm:p-4 rounded-xl sm:rounded-[20px] bg-gradient-to-r from-cc-lime/20 to-cc-lime/5 border border-cc-lime/30 flex items-center gap-2 sm:gap-4">
+              <span className="text-xl sm:text-2xl shrink-0">🔥</span>
+              <p className="text-xs sm:text-sm font-black text-cc-lime">
                 10레벨 달성 시 Diamond Key 확정 지급!
               </p>
             </div>
@@ -65,25 +65,25 @@ const VaultModal: React.FC<Props> = ({ open, onClose, ctaPayload, unlockRulesJso
         </div>
 
         {rules.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <h5 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] px-1">Unlock Conditions</h5>
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <h5 className="text-white/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] px-1">Unlock Conditions</h5>
+            <div className="flex flex-col gap-1.5 sm:gap-2">
               {rules.map((r, i) => (
-                <div key={i} className="flex gap-3 items-center p-3 rounded-xl bg-black/40 border border-white/5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-cc-lime" />
-                  <p className="text-white/70 text-[13px] font-bold">{r}</p>
+                <div key={i} className="flex gap-2 sm:gap-3 items-start p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-black/40 border border-white/5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-cc-lime shrink-0 mt-1" />
+                  <p className="text-white/70 text-[11px] sm:text-[13px] font-bold leading-relaxed">{r}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-1 sm:mt-2">
           <a
             href={PRIMARY_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center p-4 rounded-2xl bg-cc-lime text-black font-black text-sm hover:scale-105 transition-transform"
+            className="flex items-center justify-center p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-cc-lime text-black font-black text-xs sm:text-sm hover:scale-105 active:scale-95 transition-transform"
           >
             {copy.primary_cta_label}
           </a>
@@ -91,7 +91,7 @@ const VaultModal: React.FC<Props> = ({ open, onClose, ctaPayload, unlockRulesJso
             href={SECONDARY_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center p-4 rounded-2xl bg-white/10 text-white font-black text-sm border border-white/10 hover:bg-white/20 transition-all"
+            className="flex items-center justify-center p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/10 text-white font-black text-xs sm:text-sm border border-white/10 hover:bg-white/20 active:scale-95 transition-all"
           >
             {copy.secondary_cta_label}
           </a>

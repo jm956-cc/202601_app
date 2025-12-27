@@ -47,11 +47,6 @@ const LotteryPage: React.FC = () => {
     [playMutation.error],
   );
 
-  const remainingLabel = useMemo(() => {
-    if (!data) return "-";
-    return data.remaining_plays === 0 ? "남은 횟수: 무제한" : `남은 횟수: ${data.remaining_plays}회`;
-  }, [data]);
-
   const tokenLabel = useMemo(() => {
     if (!data) return "-";
     const typeLabel = data.token_type ? (GAME_TOKEN_LABELS[data.token_type] ?? data.token_type) : "-";
@@ -109,7 +104,7 @@ const LotteryPage: React.FC = () => {
       return (
         <div className="rounded-3xl border border-white/15 bg-white/5 p-6 text-center backdrop-blur">
           <p className="text-[clamp(16px,3.2vw,20px)] font-bold text-white">{errorMessage || "데이터를 불러올 수 없습니다."}</p>
-          <p className="mt-2 text-[clamp(12px,2.6vw,14px)] text-white/60">잠시 후 다시 시도해주세요.</p>
+          <p className="mt-2 text-sm text-white/60">잠시 후 다시 시도해주세요.</p>
         </div>
       );
     }
@@ -142,10 +137,6 @@ const LotteryPage: React.FC = () => {
 
         {/* Top Info Bar */}
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 backdrop-blur-md">
-            <span className="text-sm text-white/50">남은 기회</span>
-            <span className="font-mono text-base font-bold text-white">{remainingLabel.replace("남은 횟수: ", "")}</span>
-          </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 backdrop-blur-md">
             <span className="text-sm text-white/50">보유 티켓</span>
             <span className="font-mono text-base font-bold text-white">{tokenLabel}</span>

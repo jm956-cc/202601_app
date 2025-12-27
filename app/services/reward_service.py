@@ -104,14 +104,38 @@ class RewardService:
             season_pass = SeasonPassService()
 
         if reward_type == "POINT":
-            self.grant_point(db, user_id=user_id, amount=reward_amount, reason=meta.get("reason") if meta else None)
-            # 게임 보상 XP는 고정 상수로 부여 (기본 5, 메타에 game_xp가 있으면 우선)
-            if xp_from_game_reward and season_pass:
-                reason = (meta or {}).get("reason") if meta else None
-                if reason in {"dice_play", "roulette_spin", "lottery_play"}:
-                    xp_amount = (meta or {}).get("game_xp") or 5
-                    season_pass.add_bonus_xp(db, user_id=user_id, xp_amount=xp_amount)
+            reason = (meta or {}).get("reason") if meta else None
+            is_game_reward = reason in {"dice_play", "roulette_spin", "lottery_play"}
+            
+            if is_game_reward:
+                # [설계 원칙] 게임 포인트는 재화가 아니라 XP입니다.
+                if season_pass:
+                    bonus_xp = (meta or {}).get("game_xp") or 0
+                    total_xp = reward_amount + bonus_xp
+                    season_pass.add_bonus_xp(db, user_id=user_id, xp_amount=total_xp)
+            else:
+                # 어드민 수동 지급 등 게임 외 사유일 때만 현찰로 지급
+                self.grant_point(db, user_id=user_id, amount=reward_amount, reason=reason)
             return
+
+        if reward_type == "BUNDLE":
+            # BUNDLE은 여러 티켓을 한 번에 지급하는 미끼 보상입니다.
+            bundle_items = []
+            if reward_amount == 3: # Level 3 Bundle
+                bundle_items = [
+                    (GameTokenType.ROULETTE_COIN, 1),
+                    (GameTokenType.DICE_TOKEN, 1)
+                ]
+            elif reward_amount == 6: # Level 6 Bundle
+                bundle_items = [
+                    (GameTokenType.DICE_TOKEN, 2),
+                    (GameTokenType.LOTTERY_TICKET, 1)
+                ]
+            
+            for token_type, amount in bundle_items:
+                self.grant_ticket(db, user_id=user_id, token_type=token_type, amount=amount, meta=meta)
+            return
+
         if reward_type == "COUPON":
             coupon_code = meta.get("coupon_type") if meta else "GENERIC"
             self.grant_coupon(db, user_id=user_id, coupon_type=coupon_code, meta=meta)

@@ -12,9 +12,9 @@ import NewMemberDicePage from "../pages/NewMemberDicePage";
 import FigmaLanding from "../pages/FigmaLanding";
 import FigmaLandingTablet from "../pages/FigmaLandingTablet";
 import FigmaLandingMobile from "../pages/FigmaLandingMobile";
-import SeasonPassFigmaPage from "../pages/SeasonPassFigmaPage";
+import SeasonPassPage from "../pages/SeasonPassPage";
 import GuidePage from "../pages/GuidePage";
-import TeamBattleFigmaPage from "../pages/TeamBattleFigmaPage";
+import TeamBattlePage from "../pages/TeamBattlePage";
 import VaultPage from "../pages/VaultPage";
 import UserLayout from "../components/layout/UserLayout";
 import SidebarAppLayout from "../components/layout/SidebarAppLayout";
@@ -36,8 +36,8 @@ const UserRoutes: React.FC = () => {
           <Route path="/landing/tablet" element={<FigmaLandingTablet />} />
           <Route path="/landing/mobile" element={<FigmaLandingMobile />} />
           <Route path="/vault" element={<VaultPage />} />
-          <Route path="/season-pass" element={<SeasonPassFigmaPage />} />
-          <Route path="/team-battle" element={<TeamBattleFigmaPage />} />
+          <Route path="/season-pass" element={<SeasonPassPage />} />
+          <Route path="/team-battle" element={<TeamBattlePage />} />
           <Route path="/roulette" element={<RoulettePage />} />
           <Route path="/dice" element={<DicePage />} />
           <Route path="/lottery" element={<LotteryPage />} />

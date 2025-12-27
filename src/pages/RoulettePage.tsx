@@ -63,12 +63,6 @@ const RoulettePage: React.FC = () => {
     return data.token_balance;
   }, [data?.token_balance]);
 
-  const remainingSpins = useMemo(() => {
-    if (!data) return null;
-    if (typeof data.remaining_spins !== "number") return null;
-    return data.remaining_spins;
-  }, [data]);
-
   const tokenLabel = useMemo(() => {
     if (!data) return "-";
     const typeLabel = data.token_type ? (GAME_TOKEN_LABELS[data.token_type] ?? data.token_type) : "-";
@@ -237,7 +231,7 @@ const RoulettePage: React.FC = () => {
       return (
         <div className="rounded-3xl border border-white/15 bg-white/5 p-6 text-center backdrop-blur">
           <p className="text-[clamp(16px,3.2vw,20px)] font-bold text-white">{errorMessage ?? "데이터를 불러오지 못했습니다."}</p>
-          <p className="mt-2 text-[clamp(12px,2.6vw,14px)] text-white/60">잠시 후 다시 시도하거나 운영자에게 문의하세요.</p>
+          <p className="mt-2 text-sm text-white/60">잠시 후 다시 시도하거나 운영자에게 문의하세요.</p>
         </div>
       );
     }
@@ -262,7 +256,7 @@ const RoulettePage: React.FC = () => {
                   <span className="text-2xl font-black text-white drop-shadow-lg">
                     <AnimatedNumber value={rewardToast.value} from={0} />
                   </span>
-                  <span className="text-xs font-bold text-white/60">{rewardToast.type}</span>
+                  <span className="text-sm font-bold text-white/60">{rewardToast.type}</span>
                 </div>
               </div>
             </div>
@@ -287,9 +281,9 @@ const RoulettePage: React.FC = () => {
             </div>
 
             {usingFallbackSegments && (
-              <div className="mt-4 flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/5 px-4 py-1.5 text-xs font-medium text-red-200">
+              <div className="mt-4 flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/5 px-4 py-1.5 text-sm font-medium text-red-200">
                 <span className="block h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                라이브 데이터 연결 실패 (Demo Mode)
+                라이브 데이터 연결 실패 (데모 모드)
               </div>
             )}
           </div>
@@ -305,20 +299,10 @@ const RoulettePage: React.FC = () => {
               {/* Status Badges */}
               <div className="mb-8 flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 pr-5 backdrop-blur-md">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm">🏁</div>
-                  <div className="flex flex-col leading-none">
-                    <span className="text-sm text-white/40">남은 기회</span>
-                    <span className="font-mono text-base font-bold text-white">
-                      {remainingSpins === null ? "-" : remainingSpins === 0 ? "∞" : <AnimatedNumber value={remainingSpins} />}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 pr-5 backdrop-blur-md">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm">💰</div>
                   <div className="flex flex-col leading-none">
                     <span className="text-sm text-white/40">{tokenLabel}</span>
-                    <span className="font-mono text-base font-bold text-white">
+                    <span className="font-mono text-sm font-bold text-white">
                       {tokenBalance !== null ? <AnimatedNumber value={tokenBalance} /> : "-"}
                     </span>
                   </div>
@@ -386,8 +370,6 @@ const RoulettePage: React.FC = () => {
                 </div>
               </div>
             )}
-
-
           </div>
         </div>
       </div>

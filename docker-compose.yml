@@ -18,7 +18,7 @@ services:
     networks:
       - xmas-network
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD --silent" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,6 +53,7 @@ services:
       DATABASE_URL: mysql+pymysql://${MYSQL_USER:-xmasuser}:${MYSQL_PASSWORD:-xmaspass}@db:3306/${MYSQL_DATABASE:-xmas_event}
       REDIS_URL: redis://redis:6379/0
       TZ: Asia/Seoul
+      XP_FROM_GAME_REWARD: "true"
     depends_on:
       db:
         condition: service_healthy

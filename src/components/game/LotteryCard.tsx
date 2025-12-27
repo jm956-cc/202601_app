@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 
 interface Prize {
   readonly id: number;
@@ -16,7 +16,7 @@ interface LotteryCardProps {
   readonly isScratching: boolean;
   readonly onScratch: () => void;
 }
-const LotteryCard: React.FC<LotteryCardProps> = ({ prize, isRevealed, isScratching, onScratch }) => {
+const LotteryCard: React.FC<LotteryCardProps> = React.memo(({ prize, isRevealed, isScratching, onScratch }) => {
   const disabled = useMemo(() => isScratching || isRevealed, [isScratching, isRevealed]);
 
   return (
@@ -31,9 +31,8 @@ const LotteryCard: React.FC<LotteryCardProps> = ({ prize, isRevealed, isScratchi
 
         <div className="relative min-h-[200px] rounded-3xl border border-white/15 bg-white/5 p-6">
           <div
-            className={`relative flex h-full min-h-[160px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-black/40 focus:outline-none focus:ring-2 focus:ring-cc-lime/60 ${
-              disabled ? "cursor-not-allowed opacity-80" : "cursor-pointer"
-            }`}
+            className={`relative flex h-full min-h-[160px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-black/40 focus:outline-none focus:ring-2 focus:ring-cc-lime/60 ${disabled ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+              }`}
             role="button"
             tabIndex={0}
             onClick={() => {
@@ -78,6 +77,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({ prize, isRevealed, isScratchi
       </div>
     </div>
   );
-};
+});
+
 
 export default LotteryCard;

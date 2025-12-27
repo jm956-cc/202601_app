@@ -82,26 +82,26 @@ const SeasonPassPage: React.FC = () => {
 
   const cards = [
     {
-      icon: "🎄",
+      icon: "👑",
       title: "CC랭킹 TOP10",
       desc: "순위가 10위 안에 들면 스탬프 1개",
       status: external?.rank ? `현재 ${external.rank}위${top10Needed > 0 ? `, ${top10Needed}위 상승 필요` : " (완료)"}` : "랭킹 데이터 없음",
     },
     {
-      icon: "❄️",
+      icon: "📅",
       title: "CC사이트 일일이용",
       desc: "10만원 단위 플레이 시 20XP 지급",
       status: playDone ? "완료" : "미완료",
     },
     {
-      icon: "🎁",
+      icon: "💎",
       title: "CC 입금 10만원마다",
       desc: "10만원 달성할 때마다 스탬프 1개",
       status: `누적 ${formatCurrency(deposit)}원 / 다음까지 ${depositRemainder === 100_000 ? "0" : formatCurrency(depositRemainder)}원`,
     },
     {
-      icon: "⛄",
-      title: "크리스마스게임 승리 50회",
+      icon: "🎮",
+      title: "코드게임 승리 50회",
       desc: "승리 누적 50회 달성 시 스탬프 1개",
       status: internalWins.data
         ? `누적 승리 ${internalWins.data.total_wins}회 / 남은 ${internalWins.data.remaining}회`
@@ -120,7 +120,7 @@ const SeasonPassPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="mt-4 rounded-full border border-emerald-600/60 px-4 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-900/40"
+            className="mt-4 rounded-full border border-emerald-600/60 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/40"
           >
             홈으로
           </button>
@@ -133,7 +133,7 @@ const SeasonPassPage: React.FC = () => {
     return (
       <FeatureGate feature="SEASON_PASS">
         <section className="rounded-3xl border border-red-800/40 bg-slate-950/85 p-8 text-center">
-          <div className="mb-3 text-4xl">☃️</div>
+          <div className="mb-3 text-4xl">⚠️</div>
           <p className="text-lg font-bold text-red-100">레벨를 불러오지 못했습니다.</p>
           <p className="mt-2 text-sm text-slate-300">잠시 후 다시 시도하거나 지민이에게 문의해주세요.</p>
           <div className="mt-4 flex justify-center gap-2">
@@ -183,8 +183,11 @@ const SeasonPassPage: React.FC = () => {
                 </span>
                 <p className="text-sm font-bold uppercase tracking-[0.3em] text-amber-500">시즌 패스</p>
               </div>
-              <h1 className="text-5xl font-black text-white italic tracking-tighter">
-                VIP 등급 혜택 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-600">레벨 {season.data?.current_level ?? 1}</span>
+              <h1 className="text-[1.75rem] sm:text-[2.125rem] lg:text-[2.875rem] font-black text-white italic tracking-tight sm:tracking-tighter leading-tight break-words">
+                VIP 등급 혜택{" "}
+                <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-600">
+                  레벨 {season.data?.current_level ?? 1}
+                </span>
               </h1>
               <p className="max-w-md text-base text-white/60">
                 {seasonLevelSummary.detail}
@@ -226,22 +229,23 @@ const SeasonPassPage: React.FC = () => {
                 {data.levels.map((level) => {
                   const isAuto = !!level.auto_claim;
                   const rewardOverride: Record<number, string> = {
-                    1: "룰렛 티켓 1장",
-                    2: "주사위 티켓 1장",
-                    3: "룰렛 + 주사위 티켓",
-                    4: "복권 티켓 1장",
-                    5: "1 코인 (관리자)",
-                    6: "주사위 2장 + 복권 1장",
-                    7: "2 코인 (관리자)",
-                    8: "배민깁콘 1만",
-                    9: "20,000 포인트",
-                    10: "💎 다이아몬드 키 패키지",
+                    1: "🎫 룰렛 티켓 3장",
+                    2: "🎲 주사위 티켓 3장",
+                    3: "📦 올인원 티켓 번들",
+                    4: "🍀 복권 티켓 5장",
+                    5: "💣 티켓 폭탄 (룰렛10+주사위10)",
+                    6: "💰 복권 10장 세트",
+                    7: "⭐️ 1만 P + 골드 키 (관리자)",
+                    8: "30,000 포인트 (관리자)",
+                    9: "50,000 포인트 (관리자)",
+                    10: "💎 10만 P + 다이아몬드 키",
                   };
                   const displayReward = rewardOverride[level.level] ?? level.reward_label;
                   const isManualAdmin = displayReward.includes("Admin") || displayReward.includes("Coin") || displayReward.includes("Gift") || displayReward.includes("DIAMOND") || displayReward.includes("Points");
                   const canClaim = !isManualAdmin && !isAuto && level.is_unlocked && !level.is_claimed;
                   const isLevel10 = level.level === 10;
                   const isLocked = !level.is_unlocked;
+                  const isClaimed = level.is_claimed;
 
                   return (
                     <motion.div
@@ -256,7 +260,7 @@ const SeasonPassPage: React.FC = () => {
                             ? "border-amber-500/50 bg-amber-900/20 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:border-amber-400"
                             : isLocked
                               ? "border-white/5 bg-white/[0.02] opacity-60 grayscale"
-                              : "border-white/10 bg-white/[0.05]"
+                              : isClaimed ? "border-emerald-500/30 bg-emerald-950/20" : "border-white/10 bg-white/[0.05]"
                         }`}
                     >
                       {/* Unlocked Glow */}
@@ -264,7 +268,7 @@ const SeasonPassPage: React.FC = () => {
 
                       <div className="relative z-10 flex items-start justify-between">
                         <div>
-                          <p className={`text-base font-bold uppercase tracking-widest ${isLevel10 ? "text-purple-300" : canClaim ? "text-amber-300" : "text-white/40"}`}>
+                          <p className={`text-base font-bold uppercase tracking-widest ${isLevel10 ? "text-purple-300" : (canClaim || (isAuto && !isLocked)) ? "text-amber-300" : "text-white/40"}`}>
                             레벨 {level.level}
                           </p>
                           <h3 className={`mt-1 text-lg font-bold ${isLocked ? "text-white/40" : "text-white"}`}>
@@ -272,11 +276,12 @@ const SeasonPassPage: React.FC = () => {
                           </h3>
                           <p className="mt-1 text-sm text-white/30">필요 경험치: {level.required_xp.toLocaleString()} XP</p>
                         </div>
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full border ${level.is_claimed ? "border-emerald-500 bg-emerald-500/20 text-emerald-500" :
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full border ${isClaimed ? "border-emerald-500 bg-emerald-500/20 text-emerald-500" :
                           canClaim ? "animate-bounce border-amber-500 bg-amber-500 text-black shadow-lg" :
-                            "border-white/10 bg-white/5 text-white/20"
+                            !isLocked && isAuto ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" :
+                              "border-white/10 bg-white/5 text-white/20"
                           }`}>
-                          {level.is_claimed ? "✓" : canClaim ? "!" : "🔒"}
+                          {isClaimed ? "✓" : canClaim ? "!" : (!isLocked && isAuto) ? "✓" : "🔒"}
                         </div>
                       </div>
 
@@ -285,21 +290,24 @@ const SeasonPassPage: React.FC = () => {
                           disabled={!canClaim}
                           onClick={() => canClaim && claimMutation.mutate(level.level)}
                           className={`w-full rounded-xl py-3 text-base font-black tracking-wide transition-all
-                                                ${canClaim
-                              ? "bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-lg hover:brightness-110 active:scale-95"
-                              : level.is_claimed
-                                ? "cursor-default bg-white/5 text-white/30"
+                                                ${isClaimed
+                              ? "cursor-default bg-emerald-500/10 text-emerald-500/50"
+                              : canClaim
+                                ? "bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-lg hover:brightness-110 active:scale-95"
                                 : isManualAdmin && !isLocked
                                   ? "cursor-not-allowed border border-white/10 bg-transparent text-white/50"
-                                  : "cursor-not-allowed bg-black/20 text-transparent"
+                                  : isAuto && !isLocked
+                                    ? "bg-emerald-500/10 text-emerald-500 font-bold"
+                                    : "cursor-not-allowed bg-black/20 text-transparent"
                             }`}
                         >
-                          {level.is_claimed ? "지급 완료" :
+                          {isClaimed ? "지급 완료" :
                             canClaim ? "보상 받기" :
                               isManualAdmin && !isLocked ? "관리자 문의" :
-                                ""}
+                                isAuto && !isLocked ? "자동 지급됨" :
+                                  ""}
                         </button>
-                        {(isManualAdmin || isAuto) && !level.is_claimed && !isLocked && (
+                        {isManualAdmin && !isAuto && !isClaimed && !isLocked && (
                           <p className="mt-2 text-center text-sm text-amber-500/80">
                             * 이 보상은 관리자가 직접 지급해 드립니다.
                           </p>

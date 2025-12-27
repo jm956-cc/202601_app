@@ -22,8 +22,8 @@ from app.services.vault_service import VaultService
 class DiceService:
     """Encapsulates dice gameplay."""
 
-    BASE_GAME_XP = 5
-    WIN_GAME_XP = 20
+    BASE_GAME_XP = 3
+    WIN_GAME_XP = 3
 
     def __init__(self) -> None:
         self.feature_service = FeatureService()

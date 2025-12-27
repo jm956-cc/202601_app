@@ -10,7 +10,6 @@ type MemberRow = AdminUser & {
   draft?: {
     nickname: string;
     level: number;
-    season_level: number;
     xp: number;
     status: string;
   };
@@ -19,7 +18,7 @@ type MemberRow = AdminUser & {
 
 const ITEMS_PER_PAGE = 10;
 
-type SortKey = "id" | "nickname" | "level" | "season_level" | "xp" | "status";
+type SortKey = "id" | "nickname" | "level" | "xp" | "status";
 type SortDirection = "asc" | "desc";
 
 const mapErrorDetail = (error: unknown): string => {
@@ -62,7 +61,6 @@ const UserAdminPage: React.FC = () => {
   const [newMember, setNewMember] = useState({
     nickname: "",
     level: 1,
-    season_level: 1,
     xp: 0,
     status: "ACTIVE",
     password: "",
@@ -77,8 +75,7 @@ const UserAdminPage: React.FC = () => {
         isEditing: false,
         draft: {
           nickname: u.nickname ?? u.external_id,
-          level: u.level ?? 1,
-          season_level: u.season_level ?? 1,
+          level: u.season_level ?? u.level ?? 1,
           xp: u.xp ?? 0,
           status: u.status ?? "ACTIVE",
         },
@@ -93,7 +90,7 @@ const UserAdminPage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       addToast("생성 완료", "success");
       setShowAddForm(false);
-      setNewMember({ nickname: "", level: 1, season_level: 1, xp: 0, status: "ACTIVE", password: "" });
+      setNewMember({ nickname: "", level: 1, xp: 0, status: "ACTIVE", password: "" });
     },
     onError: (err) => addToast(mapErrorDetail(err), "error"),
   });
@@ -157,8 +154,7 @@ const UserAdminPage: React.FC = () => {
         return res !== 0 ? res : compareNumber(a.id ?? 0, b.id ?? 0);
       }
       if (sortKey === "status") return compareText(String(a.status ?? ""), String(b.status ?? ""));
-      if (sortKey === "level") return compareNumber(a.level ?? 1, b.level ?? 1);
-      if (sortKey === "season_level") return compareNumber(a.season_level ?? 1, b.season_level ?? 1);
+      if (sortKey === "level") return compareNumber(a.season_level ?? a.level ?? 1, b.season_level ?? b.level ?? 1);
       if (sortKey === "xp") return compareNumber(a.xp ?? 0, b.xp ?? 0);
       return 0;
     });
@@ -208,8 +204,7 @@ const UserAdminPage: React.FC = () => {
             isEditing: true,
             draft: {
               nickname: m.nickname ?? m.external_id,
-              level: m.level ?? 1,
-              season_level: m.season_level ?? 1,
+              level: m.season_level ?? m.level ?? 1,
               xp: m.xp ?? 0,
               status: m.status ?? "ACTIVE",
             },
@@ -226,14 +221,12 @@ const UserAdminPage: React.FC = () => {
         if (m.id !== id) return m;
         const base = m.draft ?? {
           nickname: m.nickname ?? m.external_id,
-          level: m.level ?? 1,
-          season_level: m.season_level ?? 1,
+          level: m.season_level ?? m.level ?? 1,
           xp: m.xp ?? 0,
           status: m.status ?? "ACTIVE",
         };
         const nextDraft = { ...base } as any;
         if (field === "level") nextDraft.level = clampNumber(value, 1, 1);
-        else if (field === "season_level") nextDraft.season_level = clampNumber(value, 1, 1);
         else if (field === "xp") nextDraft.xp = clampNumber(value, 0, 0);
         else nextDraft[field] = String(value);
         return { ...m, draft: nextDraft };
@@ -246,7 +239,7 @@ const UserAdminPage: React.FC = () => {
     const payload: Partial<AdminUserPayload> = {
       nickname: row.draft.nickname,
       level: row.draft.level,
-      season_level: row.draft.season_level,
+      season_level: row.draft.level, // Sync both for backend compatibility
       xp: row.draft.xp,
       status: row.draft.status,
     };
@@ -291,7 +284,7 @@ const UserAdminPage: React.FC = () => {
       external_id: nickname,
       nickname,
       level: clampNumber(newMember.level, 1, 1),
-      season_level: clampNumber(newMember.season_level, 1, 1),
+      season_level: clampNumber(newMember.level, 1, 1), // Sync both for backend compatibility
       xp: clampNumber(newMember.xp, 0, 0),
       status: newMember.status,
       password: newMember.password ? newMember.password.trim() : undefined,
@@ -363,7 +356,7 @@ const UserAdminPage: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="level" className="mb-1 block text-sm font-medium text-gray-300">
-                  레벨(G)
+                  레벨
                 </label>
                 <input
                   id="level"
@@ -371,19 +364,6 @@ const UserAdminPage: React.FC = () => {
                   min={1}
                   value={newMember.level}
                   onChange={(e) => setNewMember((p) => ({ ...p, level: clampNumber(e.target.value, 1, 1) }))}
-                  className="w-full rounded-md border border-[#333333] bg-[#1A1A1A] p-2 text-white focus:outline-none focus:ring-2 focus:ring-[#2D6B3B]"
-                />
-              </div>
-              <div>
-                <label htmlFor="season_level" className="mb-1 block text-sm font-medium text-gray-300">
-                  시즌Lv
-                </label>
-                <input
-                  id="season_level"
-                  type="number"
-                  min={1}
-                  value={newMember.season_level}
-                  onChange={(e) => setNewMember((p) => ({ ...p, season_level: clampNumber(e.target.value, 1, 1) }))}
                   className="w-full rounded-md border border-[#333333] bg-[#1A1A1A] p-2 text-white focus:outline-none focus:ring-2 focus:ring-[#2D6B3B]"
                 />
               </div>
@@ -434,7 +414,7 @@ const UserAdminPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setShowAddForm(false);
-                  setNewMember({ nickname: "", level: 1, season_level: 1, xp: 0, status: "ACTIVE", password: "" });
+                  setNewMember({ nickname: "", level: 1, xp: 0, status: "ACTIVE", password: "" });
                 }}
                 className="rounded-md border border-[#333333] bg-[#1A1A1A] px-4 py-2 text-sm text-gray-200 hover:bg-[#2C2C2E]"
               >
@@ -466,49 +446,36 @@ const UserAdminPage: React.FC = () => {
               <thead className="sticky top-0 z-10 border-b border-[#333333] bg-[#1A1A1A]">
                 <tr>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "id" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${sortKey === "id" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
+                      } cursor-pointer hover:bg-[#2D6B3B]`}
                     onClick={() => handleSort("id")}
                   >
                     ID{renderSortIcon("id")}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "nickname" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${sortKey === "nickname" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
+                      } cursor-pointer hover:bg-[#2D6B3B]`}
                     onClick={() => handleSort("nickname")}
                   >
                     닉네임{renderSortIcon("nickname")}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "level" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${sortKey === "level" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
+                      } cursor-pointer hover:bg-[#2D6B3B]`}
                     onClick={() => handleSort("level")}
                   >
-                    레벨(G){renderSortIcon("level")}
+                    레벨{renderSortIcon("level")}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "season_level" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
-                    onClick={() => handleSort("season_level")}
-                  >
-                    시즌Lv{renderSortIcon("season_level")}
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "xp" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${sortKey === "xp" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
+                      } cursor-pointer hover:bg-[#2D6B3B]`}
                     onClick={() => handleSort("xp")}
                   >
                     XP{renderSortIcon("xp")}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      sortKey === "status" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
-                    } cursor-pointer hover:bg-[#2D6B3B]`}
+                    className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${sortKey === "status" ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-400"
+                      } cursor-pointer hover:bg-[#2D6B3B]`}
                     onClick={() => handleSort("status")}
                   >
                     상태{renderSortIcon("status")}
@@ -543,20 +510,7 @@ const UserAdminPage: React.FC = () => {
                           className="w-24 rounded-md border border-[#333333] bg-[#1A1A1A] p-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-[#2D6B3B]"
                         />
                       ) : (
-                        member.level ?? 1
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
-                      {member.isEditing ? (
-                        <input
-                          type="number"
-                          min={1}
-                          value={member.draft?.season_level ?? 1}
-                          onChange={(e) => updateDraftField(member.id, "season_level", e.target.value)}
-                          className="w-24 rounded-md border border-[#333333] bg-[#1A1A1A] p-1.5 text-right text-white focus:outline-none focus:ring-2 focus:ring-[#2D6B3B]"
-                        />
-                      ) : (
-                        member.season_level ?? 1
+                        member.season_level ?? member.level ?? 1
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
@@ -662,9 +616,8 @@ const UserAdminPage: React.FC = () => {
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
-                  className={`relative inline-flex items-center rounded-l-md border border-[#333333] px-2 py-2 ${
-                    safePage === 1 ? "cursor-not-allowed bg-[#111111] text-gray-500" : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2D6B3B]"
-                  }`}
+                  className={`relative inline-flex items-center rounded-l-md border border-[#333333] px-2 py-2 ${safePage === 1 ? "cursor-not-allowed bg-[#111111] text-gray-500" : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2D6B3B]"
+                    }`}
                 >
                   <span className="sr-only">이전</span>
                   <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -678,11 +631,10 @@ const UserAdminPage: React.FC = () => {
                       key={pageNum}
                       type="button"
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`relative inline-flex items-center border border-[#333333] px-4 py-2 text-sm font-medium ${
-                        safePage === pageNum
-                          ? "z-10 bg-[#2D6B3B] text-[#91F402]"
-                          : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2C2C2E]"
-                      }`}
+                      className={`relative inline-flex items-center border border-[#333333] px-4 py-2 text-sm font-medium ${safePage === pageNum
+                        ? "z-10 bg-[#2D6B3B] text-[#91F402]"
+                        : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2C2C2E]"
+                        }`}
                     >
                       {pageNum}
                     </button>
@@ -693,9 +645,8 @@ const UserAdminPage: React.FC = () => {
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
-                  className={`relative inline-flex items-center rounded-r-md border border-[#333333] px-2 py-2 ${
-                    safePage === totalPages ? "cursor-not-allowed bg-[#111111] text-gray-500" : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2D6B3B]"
-                  }`}
+                  className={`relative inline-flex items-center rounded-r-md border border-[#333333] px-2 py-2 ${safePage === totalPages ? "cursor-not-allowed bg-[#111111] text-gray-500" : "bg-[#1A1A1A] text-gray-300 hover:bg-[#2D6B3B]"
+                    }`}
                 >
                   <span className="sr-only">다음</span>
                   <ChevronRight className="h-5 w-5" aria-hidden="true" />

@@ -269,15 +269,15 @@ const RouletteConfigPage: React.FC = () => {
 
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black bg-opacity-70 p-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:items-center"
           role="dialog"
           aria-modal="true"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div className="w-full max-w-3xl overflow-hidden rounded-lg border border-[#333333] bg-[#111111] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#333333] bg-[#2D6B3B] p-6">
+          <div className="w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-[#333333] bg-[#111111] shadow-xl sm:max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-[#333333] bg-[#2D6B3B] p-4 sm:p-6">
               <h3 className="text-xl font-bold text-white">{editing ? "룰렛 설정 수정" : "룰렛 설정 추가"}</h3>
               <button
                 type="button"
@@ -289,7 +289,7 @@ const RouletteConfigPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-5 bg-[#0A0A0A] p-6">
+            <form onSubmit={onSubmit} className="space-y-5 bg-[#0A0A0A] p-4 sm:p-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <label htmlFor="roulette_name" className="text-sm text-gray-200">

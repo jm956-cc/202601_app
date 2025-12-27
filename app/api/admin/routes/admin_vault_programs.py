@@ -28,9 +28,6 @@ _core = APIRouter(tags=["admin-vault-programs"])
 # Expose both to avoid 404s.
 router = APIRouter(prefix="/admin/api/vault-programs", tags=["admin-vault-programs"])
 legacy_router = APIRouter(prefix="/api/admin/vault-programs", tags=["admin-vault-programs"])
-
-router.include_router(_core)
-legacy_router.include_router(_core)
 service = Vault2Service()
 
 
@@ -158,3 +155,8 @@ def upsert_user_eligibility(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return VaultEligibilityResponse(user_id=user_id, eligible=eligible)
+
+
+# NOTE: include_router must happen after _core routes are defined.
+router.include_router(_core)
+legacy_router.include_router(_core)

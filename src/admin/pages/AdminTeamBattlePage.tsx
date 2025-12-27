@@ -75,9 +75,19 @@ const AdminTeamBattlePage: React.FC = () => {
     setError(null);
     setRefreshing(true);
     try {
-      const [s, t, lb, users] = await Promise.all([getActiveSeason(), listTeamsAdmin(true), getLeaderboard(undefined, 100, 0), fetchUsers()]);
+      const [s, t, lb, users] = await Promise.all([
+        getActiveSeason(),
+        listTeamsAdmin(true),
+        getLeaderboard(undefined, 100, 0),
+        fetchUsers(),
+      ]);
+
+      const tArr = Array.isArray(t) ? t : [];
+      const lbArr = Array.isArray(lb) ? lb : [];
+      const usersArr = Array.isArray(users) ? users : [];
+
       setSeason(s);
-      setAllUsers(users);
+      setAllUsers(usersArr);
       if (s) {
         setSeasonEditForm({
           name: s.name,
@@ -86,12 +96,14 @@ const AdminTeamBattlePage: React.FC = () => {
           is_active: s.is_active,
         });
       }
-      setTeams(t);
-      setLeaderboard(lb);
-      if (lb.length && selectedTeamForContrib === null) {
-        setSelectedTeamForContrib(lb[0].team_id);
+      setTeams(tArr);
+      setLeaderboard(lbArr);
+
+      if (lbArr.length > 0 && selectedTeamForContrib === null) {
+        setSelectedTeamForContrib(lbArr[0].team_id);
       }
-      const mapped = t.reduce<Record<number, { name: string; icon: string; is_active: boolean }>>((acc, team) => {
+
+      const mapped = tArr.reduce<Record<number, { name: string; icon: string; is_active: boolean }>>((acc, team) => {
         acc[team.id] = { name: team.name, icon: team.icon || "", is_active: team.is_active };
         return acc;
       }, {});
@@ -372,8 +384,8 @@ const AdminTeamBattlePage: React.FC = () => {
   );
 
   const ModalShell = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-3xl rounded-lg border border-[#333333] bg-[#111111] shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] sm:items-center">
+      <div className="w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-[#333333] bg-[#111111] shadow-lg">
         <div className="flex items-center justify-between border-b border-[#333333] px-6 py-4">
           <h3 className="text-lg font-medium text-[#91F402]">{title}</h3>
           <button type="button" onClick={onClose} className="rounded-md p-2 text-gray-300 hover:bg-[#1A1A1A]" aria-label="닫기">
@@ -399,9 +411,8 @@ const AdminTeamBattlePage: React.FC = () => {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`rounded-t-md px-4 py-2 text-sm font-medium ${
-                tab === t.key ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-300 hover:bg-[#1A1A1A]"
-              }`}
+              className={`rounded-t-md px-4 py-2 text-sm font-medium ${tab === t.key ? "bg-[#2D6B3B] text-[#91F402]" : "text-gray-300 hover:bg-[#1A1A1A]"
+                }`}
             >
               {t.label}
             </button>
@@ -576,11 +587,10 @@ const AdminTeamBattlePage: React.FC = () => {
                       handleTeamUpdate(t.id, { is_active: next });
                     }}
                     disabled={teamBusy === t.id}
-                    className={`rounded-md px-4 py-2 text-sm font-medium ${
-                      (teamEdits[t.id]?.is_active ?? t.is_active)
+                    className={`rounded-md px-4 py-2 text-sm font-medium ${(teamEdits[t.id]?.is_active ?? t.is_active)
                         ? "bg-red-900/60 text-red-100 hover:bg-red-900"
                         : "bg-[#2D6B3B] text-white hover:bg-[#91F402] hover:text-black"
-                    } disabled:opacity-60`}
+                      } disabled:opacity-60`}
                   >
                     {teamBusy === t.id ? "처리 중..." : (teamEdits[t.id]?.is_active ?? t.is_active) ? "비활성" : "활성"}
                   </button>
@@ -636,9 +646,8 @@ const AdminTeamBattlePage: React.FC = () => {
               {leaderboard.map((row, idx) => (
                 <div
                   key={row.team_id}
-                  className={`flex items-center justify-between rounded-lg border border-[#333333] px-5 py-4 ${
-                    idx === 0 ? "bg-[#2D6B3B] text-white" : "bg-[#0A0A0A] text-white"
-                  }`}
+                  className={`flex items-center justify-between rounded-lg border border-[#333333] px-5 py-4 ${idx === 0 ? "bg-[#2D6B3B] text-white" : "bg-[#0A0A0A] text-white"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="text-lg font-bold">{idx + 1}</div>

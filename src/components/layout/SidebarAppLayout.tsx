@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, memo } from "react";
 import { Outlet } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SidebarContainer, { SidebarMobileFooter } from "./SidebarContainer";
@@ -8,7 +8,7 @@ import { useToast } from "../common/ToastProvider";
 import type { GameTokenType } from "../../types/gameTokens";
 import { isTrialGrantEnabled } from "../../config/featureFlags";
 
-const SidebarAppLayout: React.FC = () => {
+const SidebarAppLayout: React.FC = memo(() => {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const didAttemptRef = useRef(false);
@@ -90,6 +90,6 @@ const SidebarAppLayout: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default SidebarAppLayout;

@@ -15,6 +15,7 @@ from app.models.season_pass import (
     SeasonPassRewardLog,
     SeasonPassStampLog,
 )
+from app.models.user import User
 from app.schemas.season_pass import SeasonPassStatusResponse
 from app.services.reward_service import RewardService
 
@@ -110,12 +111,12 @@ class SeasonPassService:
             2: "주사위 티켓 1장",
             3: "룰렛 1장 + 주사위 1장",
             4: "복권 티켓 1장",
-            5: "CC 코인 1개",
+            5: "룰렛 티켓 2장",
             6: "주사위 2장 + 복권 1장",
-            7: "CC 코인 2개",
-            8: "배민깁콘 1만",
-            9: "CC 포인트 2만",
-            10: "CC 포인트 5만",
+            7: "CC 코인 2개 (수동)",
+            8: "배민깁콘 1만 (수동)",
+            9: "CC 포인트 2만 (수동)",
+            10: "CC 포인트 5만 (수동)",
         }
 
         level_payload = []
@@ -293,6 +294,13 @@ class SeasonPassService:
 
         db.commit()
         db.refresh(progress)
+
+        # [Level Unification] Sync season level to global user level
+        user = db.get(User, user_id)
+        if user and user.level != progress.current_level:
+            user.level = progress.current_level
+            db.add(user)
+            db.commit()
 
         leveled_up = progress.current_level > previous_level
         return {
@@ -565,6 +573,13 @@ class SeasonPassService:
 
         db.commit()
         db.refresh(progress)
+
+        # [Level Unification] Sync season level to global user level
+        user = db.get(User, user_id)
+        if user and user.level != progress.current_level:
+            user.level = progress.current_level
+            db.add(user)
+            db.commit()
 
         leveled_up = progress.current_level > previous_level
         return {

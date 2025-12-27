@@ -219,12 +219,30 @@ const TeamBattlePage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Grid: My Status & Leaderboard */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Left: My Team Status */}
-        <div className="flex flex-col gap-6">
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6 shadow-xl backdrop-blur-md">
-            <h2 className="text-lg font-bold text-white">마이 팀</h2>
+      {/* Rule Ticker */}
+      <div className="flex items-center gap-3 overflow-hidden rounded-full border border-white/5 bg-white/[0.02] px-4 py-2 text-base text-white/50 backdrop-blur-sm">
+        <span className="font-bold text-cc-lime">안내</span>
+        <div className="flex flex-wrap gap-2 overflow-hidden whitespace-normal sm:flex-nowrap sm:gap-4 sm:whitespace-nowrap">
+          <span>• 자동 배정 (밸런스 기준)</span>
+          <span>• 시작 후 24시간 내 배정 가능</span>
+          <span>• 게임 1회당 10점 (일일 최대 500점)</span>
+          <span>• 상위 팀 전원 보상 지급</span>
+        </div>
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
+          {/* Team Select / Status Card */}
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-xl backdrop-blur-md">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">내 팀 현황</h2>
+              {myTeamName && (
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-bold text-white">
+                  {myTeamName}
+                </span>
+              )}
+            </div>
 
             {!selectedTeam ? (
               <div className="mt-6 flex flex-col items-center gap-6 py-8">
