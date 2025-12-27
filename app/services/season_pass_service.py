@@ -1,6 +1,7 @@
 """Season pass domain service implementation aligned with design docs."""
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime
 from typing import Iterable
 
@@ -25,6 +26,7 @@ class SeasonPassService:
 
     def __init__(self) -> None:
         self.reward_service = RewardService()
+        self.logger = logging.getLogger(__name__)
 
     def get_current_season(self, db: Session, now: date | datetime) -> SeasonPassConfig | None:
         """Return the active season for the given date or None if not found."""
@@ -63,6 +65,7 @@ class SeasonPassService:
         db.add(progress)
         db.commit()
         db.refresh(progress)
+        self._auto_claim_initial_level(db, progress)
         return progress
 
     def get_status(self, db: Session, user_id: int, now: date | datetime) -> dict:
@@ -247,8 +250,19 @@ class SeasonPassService:
                         meta=reward_meta,
                     )
                 except Exception:
-                    # Reward delivery failure should not block stamp flow; rely on logs for retry.
-                    pass
+                    # Reward delivery failure should not block stamp flow; log for retry visibility.
+                    self.logger.warning(
+                        "Season pass auto-claim failed",
+                        extra={
+                            "user_id": user_id,
+                            "season_id": season.id,
+                            "level": level.level,
+                            "source": "STAMP",
+                            "stamp_count": stamp_count,
+                            "xp_added": xp_to_add,
+                        },
+                        exc_info=True,
+                    )
                 rewards.append(
                     {
                         "level": level.level,
@@ -483,6 +497,61 @@ class SeasonPassService:
             .order_by(SeasonPassLevel.level)
         ).scalars().all()
 
+    def _auto_claim_initial_level(self, db: Session, progress: SeasonPassProgress) -> None:
+        """Auto-claim level 1 reward on first season-pass creation (if configured as auto_claim)."""
+
+        level_row = db.execute(
+            select(SeasonPassLevel).where(
+                SeasonPassLevel.season_id == progress.season_id,
+                SeasonPassLevel.level == 1,
+            )
+        ).scalar_one_or_none()
+
+        if not level_row or not level_row.auto_claim:
+            return
+
+        existing_log = db.execute(
+            select(SeasonPassRewardLog).where(
+                SeasonPassRewardLog.user_id == progress.user_id,
+                SeasonPassRewardLog.season_id == progress.season_id,
+                SeasonPassRewardLog.level == 1,
+            )
+        ).scalar_one_or_none()
+
+        if existing_log:
+            return
+
+        reward_log = SeasonPassRewardLog(
+            user_id=progress.user_id,
+            season_id=progress.season_id,
+            progress_id=progress.id,
+            level=1,
+            reward_type=level_row.reward_type,
+            reward_amount=level_row.reward_amount,
+            claimed_at=datetime.utcnow(),
+        )
+        db.add(reward_log)
+        reward_meta = {
+            "season_id": progress.season_id,
+            "level": 1,
+            "source": "SEASON_PASS_AUTO_CLAIM_INIT",
+        }
+        try:
+            self.reward_service.deliver(
+                db,
+                user_id=progress.user_id,
+                reward_type=level_row.reward_type,
+                reward_amount=level_row.reward_amount,
+                meta=reward_meta,
+            )
+        except Exception:
+            # Do not block creation on delivery failure; rely on logs for retry.
+            self.logger.warning(
+                "Season pass init auto-claim failed", extra={"user_id": progress.user_id, "season_id": progress.season_id, "level": 1}, exc_info=True
+            )
+        db.commit()
+        db.refresh(reward_log)
+
     def add_bonus_xp(
         self,
         db: Session,
@@ -555,8 +624,18 @@ class SeasonPassService:
                         meta=reward_meta,
                     )
                 except Exception:
-                    # Reward delivery failure should not block XP flow; rely on logs for retry.
-                    pass
+                    # Reward delivery failure should not block XP flow; log for retry visibility.
+                    self.logger.warning(
+                        "Season pass auto-claim failed",
+                        extra={
+                            "user_id": user_id,
+                            "season_id": season.id,
+                            "level": level.level,
+                            "source": "BONUS_XP",
+                            "xp_added": xp_amount,
+                        },
+                        exc_info=True,
+                    )
                 rewards.append(
                     {
                         "level": level.level,
