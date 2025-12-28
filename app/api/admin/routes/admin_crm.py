@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
+from app.db.session import SessionLocal
 from app.api.deps import get_db, get_current_admin_id
 from app.services.user_segment_service import UserSegmentService
 from app.models.user import User
@@ -296,8 +297,8 @@ def send_message(
     db.commit()
     db.refresh(msg)
     
-    # Fan-out logic (naive sync for now, or background task)
-    background_tasks.add_task(fan_out_message, db, msg.id, payload.target_type, payload.target_value)
+    # Fan-out logic (Async fan-out with fresh session)
+    background_tasks.add_task(fan_out_message, msg.id, payload.target_type, payload.target_value)
     
     return msg
 
@@ -311,42 +312,44 @@ def list_messages(
 
 
 # Helper for fan-out
-def fan_out_message(db: Session, message_id: int, target_type: str, target_value: Optional[str]):
-    # Re-acquire session if needed (BackgroundTasks creates new thread/context usually, but safer to use fresh session or careful scoping)
-    # Using the passed session might be risky if request closes. Better to create new session or rely on dependency injection if possible.
-    # For now, simplistic query.
-    
-    # Actually, background_tasks with session is tricky in FastAPI. 
-    # Let's assume we do it synchronously for prototype or refactor.
-    # For prototype, let's just query ID list.
-    
-    # 1. Select Users
-    target_user_ids = []
-    
-    if target_type == "ALL":
-        target_user_ids = [u.id for u in db.query(User.id).all()]
+def fan_out_message(message_id: int, target_type: str, target_value: Optional[str]):
+    # Create a fresh session for background task
+    db = SessionLocal()
+    try:
+        # 1. Select Users
+        target_user_ids = []
         
-    elif target_type == "USER":
-        if target_value:
-            target_user_ids = [int(uid.strip()) for uid in target_value.split(",")]
+        if target_type == "ALL":
+            target_user_ids = [u.id for u in db.query(User.id).all()]
             
-    elif target_type == "SEGMENT":
-        if target_value:
-            # target_value should be something like "WHALE", "DORMANT", etc.
-            target_user_ids = UserSegmentService.get_users_by_segment(db, target_value, limit=10000)
-    
-    # 2. Insert Inbox
-    inbox_items = []
-    for uid in target_user_ids:
-        inbox_items.append(AdminMessageInbox(
-            user_id=uid,
-            message_id=message_id
-        ))
-    
-    if inbox_items:
-        db.bulk_save_objects(inbox_items)
-        # Update Stats
-        msg = db.query(AdminMessage).filter(AdminMessage.id == message_id).first()
-        if msg:
-            msg.recipient_count = len(inbox_items)
-        db.commit()
+        elif target_type == "USER":
+            if target_value:
+                target_user_ids = [int(uid.strip()) for uid in target_value.split(",")]
+                
+        elif target_type == "SEGMENT":
+            if target_value:
+                # target_value should be something like "WHALE", "DORMANT", etc.
+                target_user_ids = UserSegmentService.get_users_by_segment(db, target_value, limit=10000)
+        
+        # 2. Insert Inbox
+        inbox_items = []
+        for uid in target_user_ids:
+            inbox_items.append(AdminMessageInbox(
+                user_id=uid,
+                message_id=message_id
+            ))
+        
+        if inbox_items:
+            db.bulk_save_objects(inbox_items)
+            # Update Stats
+            msg = db.query(AdminMessage).filter(AdminMessage.id == message_id).first()
+            if msg:
+                msg.recipient_count = len(inbox_items)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        # Log error in production
+        import logging
+        logging.error(f"Error in fan_out_message: {e}")
+    finally:
+        db.close()
