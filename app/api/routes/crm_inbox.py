@@ -8,7 +8,7 @@ from app.api.deps import get_db, get_current_user
 from app.models.user import User
 from app.models.admin_message import AdminMessage, AdminMessageInbox
 
-router = APIRouter(prefix="/crm/messages", tags=["crm-inbox"])
+router = APIRouter(prefix="/api/crm/messages", tags=["crm-inbox"])
 
 class InboxMessageResponse(BaseModel):
     id: int

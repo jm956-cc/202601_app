@@ -1,12 +1,4 @@
-import axios from "axios";
-
-// Helper to get auth headers (assuming same pattern as other APIs)
-const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import userApi from "./httpClient";
 
 export interface InboxMessage {
     id: number;
@@ -18,14 +10,10 @@ export interface InboxMessage {
 }
 
 export const fetchMyInbox = async (): Promise<InboxMessage[]> => {
-    const response = await axios.get(`${API_BASE_URL}/crm/messages/inbox`, {
-        headers: getAuthHeaders(),
-    });
+    const response = await userApi.get<InboxMessage[]>("/api/crm/messages/inbox");
     return response.data;
 };
 
 export const markMessageAsRead = async (messageId: number): Promise<void> => {
-    await axios.post(`${API_BASE_URL}/crm/messages/${messageId}/read`, {}, {
-        headers: getAuthHeaders(),
-    });
+    await userApi.post(`/api/crm/messages/${messageId}/read`, {});
 };
