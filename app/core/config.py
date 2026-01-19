@@ -74,7 +74,7 @@ class Settings(BaseSettings):
         ),
     )
     streak_day_reset_hour_kst: int = Field(
-        0,
+        9,
         validation_alias=AliasChoices(
             "STREAK_DAY_RESET_HOUR_KST",
             "streak_day_reset_hour_kst",

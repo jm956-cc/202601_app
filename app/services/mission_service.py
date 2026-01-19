@@ -454,18 +454,21 @@ class MissionService:
         return 1.0
 
     def get_reset_date_str(self, category: MissionCategory) -> str:
-        """Returns the reset key string based on category and current KST time."""
-        # Enforce KST (UTC+9)
-        from datetime import timezone
-
-        kst_tz = timezone(timedelta(hours=9))
-        now = datetime.now(kst_tz)
-
+        """Returns the reset key string based on category and current KST time.
+        
+        Updated to use strict operational play date (default 9AM reset) to align with Vault/Streak logic.
+        """
+        now_tz = self._now_tz()
+        
         if category == MissionCategory.DAILY:
-            return now.strftime("%Y-%m-%d")
+            # STRICT ALIGNMENT: Use operational play date (e.g. 09:00 KST rollover)
+            return self._operational_play_date(now_tz).strftime("%Y-%m-%d")
+        
         elif category == MissionCategory.WEEKLY:
-            # ISO Year + Week Number
-            year, week, _ = now.isocalendar()
+            # For Weekly, we can likely stick to ISO calendar or align with Op Date.
+            # ISO Week implies Monday start.
+            # If we want 9AM Monday reset, we should use operational date's isocalendar.
+            year, week, _ = self._operational_play_date(now_tz).isocalendar()
             return f"{year}-W{week:02d}"
         else:
             return "STATIC"
