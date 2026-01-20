@@ -394,3 +394,9 @@ docs/06_ops/202601/response_templates/telegram_report_CherryPickers.csv
 docs/06_ops/202601/response_templates/telegram_report_Depositors.csv
 docs/06_ops/202601/response_templates/telegram_report_General_Users.csv
 docs/06_ops/202601/response_templates/telegram_report_VIP_Customers.csv
+docs/06_ops/202601/exports/20260118_운영일지_DailyFocused.md
+docs/06_ops/202601/exports/20260119_운영일지_DailyFocused.md
+docs/06_ops/202601/exterior/도파민엑셀/260120입급업로드.CSV
+scripts/daily_ops_log_generator.py
+scripts/upload_external_deposit_csv.py
+scripts/daily_ops_log_generator.py

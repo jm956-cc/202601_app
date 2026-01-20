@@ -258,7 +258,7 @@ def generate_report(date_str: str):
                 all_ids.add(uid)
         
         # [New] Fetch Visit Counts for Priority Scoring
-        if not all_ids: return {}, set()
+        if not all_ids: return {}, set(), {}
         
         ids_str = ','.join(map(str, all_ids))
         v_q = f"SELECT user_id, COUNT(*) FROM user_event_log WHERE user_id IN ({ids_str}) GROUP BY user_id"
